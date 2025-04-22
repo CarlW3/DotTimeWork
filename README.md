@@ -1,4 +1,3 @@
-
 ﻿# DotTimeWork
 DotTimeWork is a simple time tracking tool that helps you keep track of your work hours and tasks.
 
