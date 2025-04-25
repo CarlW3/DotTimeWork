@@ -94,12 +94,19 @@ namespace DotTimeWork.TimeTracker
         }
         private Dictionary<string, TaskData> LoadTaskData(string file)
         {
-            if (!File.Exists(GetDateFilePath(file)))
+            try
+            {
+                if (!File.Exists(GetDateFilePath(file)))
+                {
+                    return new Dictionary<string, TaskData>();
+                }
+                string json = File.ReadAllText(GetDateFilePath(file));
+                return JsonSerializer.Deserialize<Dictionary<string, TaskData>>(json, _jsonOptions);
+            }
+            catch
             {
                 return new Dictionary<string, TaskData>();
             }
-            string json = File.ReadAllText(GetDateFilePath(file));
-            return JsonSerializer.Deserialize<Dictionary<string, TaskData>>(json, _jsonOptions);
         }
 
         private void SaveTaskData()

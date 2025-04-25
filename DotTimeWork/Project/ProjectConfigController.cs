@@ -1,7 +1,5 @@
 using DotTimeWork.Commands;
 using Spectre.Console;
-using System;
-using System.IO;
 
 namespace DotTimeWork.Project
 {
@@ -16,7 +14,6 @@ namespace DotTimeWork.Project
         {
             if (!File.Exists(GlobalConstants.GetPathToProjectConfigFile()))
             {
-                Console.WriteLine("Project config file not found.");
                 return false;
             }
 
