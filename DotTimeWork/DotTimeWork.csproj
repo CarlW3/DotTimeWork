@@ -8,7 +8,25 @@
 	<PackAsTool>true</PackAsTool>
 	<ToolCommandName>dottimework</ToolCommandName>
 	<PackageOutputPath>./nupkg</PackageOutputPath>
+	<Title>Dot TimeWork</Title>
+	<Authors>Carl-Philip Wenz</Authors>
+	<Description>DotTimeWork is a simple time tracking commandline tool that helps you keep track of your working time and tasks.
+It works by executing single commands one after another, similar to the DotNet CLI.</Description>
+	<PackageProjectUrl></PackageProjectUrl>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<RepositoryUrl>https://github.com/CarlW3/DotTimeWork</RepositoryUrl>
+	<RepositoryType>git</RepositoryType>
+	<PackageTags>command line; cmd; time</PackageTags>
+	<PackageReleaseNotes>Initial Version</PackageReleaseNotes>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />

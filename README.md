@@ -1,8 +1,21 @@
 ﻿# DotTimeWork
-DotTimeWork is a simple time tracking tool that helps you keep track of your work hours and tasks.
+DotTimeWork is a simple time tracking commandline tool that helps you keep track of your working time and tasks.
+It works by executing single commands one after another, similar to the DotNet CLI.
 
-## Basic Idea
-Like the DotNet CLI this tool is designed to run different commands one after another -> Single Steps
+## How to install - Release
+1. Run the commman `dotnet tool install --global dottimework` to install the tool globally.
+2. Run the command `dottimework -?` to see the available commands.
+
+## How to install - Development
+1. Clone the repository to your local machine.
+2. Switch to the cloned Project Directory in PowerShell
+3. Install the required dependencies using `dotnet restore`.
+4. Run the commman `dotnet pack` to build and publish*
+5. Run the commman `dotnet tool install --global --add-source ./nupkg dottimework` to install the tool globally.
+6. Run the command `dottimework -?` to see the available commands.
+
+*in the future the tool will be published to NuGet.org and you can install it directly from there.
+
 
 ## How to use
 Switch to the Project Directory where you want to track time.
