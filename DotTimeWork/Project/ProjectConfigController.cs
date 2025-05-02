@@ -42,6 +42,7 @@ namespace DotTimeWork.Project
                 Console.WriteLine("Project name cannot be empty. Using default value of 'My Project'.");
                 projectName = "My Project";
             }
+            var projectDescription = AnsiConsole.Ask<string>("Please enter the project description:");
 
             Console.WriteLine("Please enter the project start date (yyyy-MM-dd or EMPTY for today):");
             var projectStartDate = Console.ReadLine();
@@ -82,6 +83,7 @@ namespace DotTimeWork.Project
             _currentProjectConfig = new ProjectConfig
             {
                 ProjectName = projectName,
+                Description = projectDescription,
                 MaxTimePerDay = maxTime,
                 ProjectStart = projectStart,
                 ProjectEnd = projectEnd == DateTime.MinValue ? null : projectEnd,

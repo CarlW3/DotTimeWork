@@ -1,7 +1,4 @@
 ﻿using Spectre.Console;
-using System.Diagnostics.Metrics;
-using System.Numerics;
-using System.Runtime.ConstrainedExecution;
 
 namespace DotTimeWork.Developer
 {
@@ -24,12 +21,7 @@ namespace DotTimeWork.Developer
 
             var developerName = AnsiConsole.Ask<string>("Developer Name:");
 
-            var developerEmail = AnsiConsole.Ask<string>("Please enter the developer email:", string.Empty);
-            if (string.IsNullOrEmpty(developerEmail))
-            {
-                Console.WriteLine("Developer email cannot be empty. Using default value of 'N/A'.");
-                developerEmail = "N/A";
-            }
+            var developerEmail = AnsiConsole.Ask<string>("Please enter the developer email:", "N/A");
 
             var hoursPerDayWork = AnsiConsole.Prompt(
             new TextPrompt<int>("Please enter the hours per day work(default is 8):")
@@ -51,7 +43,6 @@ namespace DotTimeWork.Developer
 
             var json = System.Text.Json.JsonSerializer.Serialize(_currentDeveloperConfig);
             File.WriteAllText(GlobalConstants.GetPathToDeveloperConfigFile(), json);
-            Console.WriteLine("Developer config file created.");
         }
 
         public void AssignTaskToCurrentDeveloper(string name)
@@ -76,6 +67,10 @@ namespace DotTimeWork.Developer
             }
         }
 
+        public bool IsDeveloperConfigFileExisting()
+        {
+            return File.Exists(GlobalConstants.GetPathToDeveloperConfigFile());
+        }
         private DeveloperConfig? LoadDeveloperConfig()
         {
             if (!File.Exists(GlobalConstants.GetPathToDeveloperConfigFile()))

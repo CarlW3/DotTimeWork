@@ -2,6 +2,13 @@
 DotTimeWork is a simple time tracking commandline tool that helps you keep track of your working time and tasks.
 It works by executing single commands one after another, similar to the DotNet CLI.
 
+## Latest Update
+**Under development: Verion 1.1**
+
+- HTML Report with Project Info
+- Project Config with Description Text
+
+
 ## How to install - Release
 1. Run the commman `dotnet tool install --global dottimework` to install the tool globally.
 2. Run the command `dottimework -?` to see the available commands.

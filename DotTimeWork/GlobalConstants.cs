@@ -4,10 +4,12 @@ namespace DotTimeWork
 {
     public static class GlobalConstants
     {
-        public const string RELEASE_VERSION = "1.0";
+        public const string RELEASE_VERSION = "1.1";
 
         private const string ProjectConfigFilePath = "dottimework.json";
         private const string DeveloperConfigFilePath = "developer.json";
+
+        public const string REPORT_HTML_TITLE = "Dot Time Worker Report";
 
         private static string AssemblyDirectory
         {
