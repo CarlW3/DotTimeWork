@@ -23,6 +23,13 @@ namespace DotTimeWork.Commands
             Description = "Open the report after creation. If not specified, the default behavior will be used."
         };
 
+        public static Option<bool> ReportIncludeFinishedTasks = new Option<bool>("--include-finished",()=>true, "Include finished tasks in the report")
+        {
+            IsRequired = false,
+            ArgumentHelpName = "include-finished",
+            Description = "Include finished tasks in the report. If not specified, the default behavior will be used."
+        };
+
         public static Option<bool> VerboseLogging=new Option<bool>("--verbose", "Enable verbose logging")
         {
             IsRequired = false,
@@ -33,6 +40,7 @@ namespace DotTimeWork.Commands
         {
             VerboseLogging.AddAlias("-v");
             TaskIdOption.AddAlias("-t");
+            ReportIncludeFinishedTasks.AddAlias("-if");
         }
         /// <summary>
         /// Can be activated by Command Line option to allow more verbose logging
