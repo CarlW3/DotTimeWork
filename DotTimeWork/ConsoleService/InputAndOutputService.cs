@@ -40,5 +40,10 @@ namespace DotTimeWork.ConsoleService
         {
             return AnsiConsole.Ask<int>(text,defaultValue);
         }
+
+        public string AskForStringInput(string text)
+        {
+            return AnsiConsole.Ask<string>(text);
+        }
     }
 }

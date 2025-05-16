@@ -2,6 +2,8 @@
 {
     public interface IInputAndOutputService
     {
+        string AskForStringInput(string text);
+
         string AskForInput(string text, string defaultText);
         int AskForInput(string text, int defaultValue);
         void PrintError(string text);

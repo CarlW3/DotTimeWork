@@ -14,7 +14,7 @@ namespace DotTimeWork.Commands
             Description = "Creates Project Config file. This will create a new project config file in the current directory. The config file will be used to store the project settings and tasks.";
         }
 
-        private void Execute(bool verboseLogging)
+        internal void Execute(bool verboseLogging)
         {
             PublicOptions.IsVerbosLogging = verboseLogging;
             if (verboseLogging)

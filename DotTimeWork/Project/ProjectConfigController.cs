@@ -1,6 +1,7 @@
 using DotTimeWork.Commands;
 using DotTimeWork.ConsoleService;
 using DotTimeWork.DataProvider;
+using System.Runtime.Versioning;
 
 namespace DotTimeWork.Project
 {
@@ -9,7 +10,7 @@ namespace DotTimeWork.Project
     /// </summary>
     public class ProjectConfigController : IProjectConfigController
     {
-        private ProjectConfig _currentProjectConfig;
+        private ProjectConfig? _currentProjectConfig;
         private readonly IProjectConfigDataProvider _projectConfigDataProvider;
         private readonly IInputAndOutputService _inputAndOutputService;
 
@@ -28,15 +29,15 @@ namespace DotTimeWork.Project
             }
             _inputAndOutputService.PrintNormal("Creating project config file...");
 
-            var projectName = _inputAndOutputService.AskForInput("Please enter the project name:","No name");
+            var projectName = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_Name,"No name");
 
-            var projectDescription = _inputAndOutputService.AskForInput("Please enter the project description:",string.Empty);
+            var projectDescription = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_Description,string.Empty);
 
-            var projectStartDate = _inputAndOutputService.AskForInput("Please enter the project start date:",DateTime.Now.ToString("yyyy-MM-dd"));
+            var projectStartDate = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_StartDate,DateTime.Now.ToString("yyyy-MM-dd"));
             
-            var projectEndDate = _inputAndOutputService.AskForInput("Please enter the project end date (yyyy-MM-dd or EMPTY for N/A):","N/A");
+            var projectEndDate = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_EndDate, "N/A");
 
-            var maxTime = _inputAndOutputService.AskForInput("Please enter the max time per day (in hours):",0);
+            var maxTime = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_TimePerDay,0);
 
 
             DateTime projectStart;
@@ -74,12 +75,7 @@ namespace DotTimeWork.Project
             _projectConfigDataProvider.PersistProjectConfig(_currentProjectConfig);
 
             _inputAndOutputService.PrintSuccess("Project config file created.");
-            // good question how to abstract this one to other data sources...
-            string timeTrackingFolder = Path.Combine(Environment.CurrentDirectory, _currentProjectConfig.TimeTrackingFolder);
-            Directory.CreateDirectory(timeTrackingFolder);
-            _inputAndOutputService.PrintNormal($"Time tracking folder created at {timeTrackingFolder}");
-            File.WriteAllText(Path.Combine(timeTrackingFolder, "README.txt"), "This folder contains the time tracking files for the project." + Environment.NewLine + "Created: " + DateTime.Now);
-            _inputAndOutputService.PrintNormal($"README.txt file created in {timeTrackingFolder}");
+
         }
 
         public ProjectConfig GetCurrentProjectConfig()

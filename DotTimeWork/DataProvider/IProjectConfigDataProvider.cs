@@ -5,7 +5,7 @@ namespace DotTimeWork.DataProvider
     public interface IProjectConfigDataProvider
     {
         void DeleteProjectConfigFile();
-        ProjectConfig LoadProjectConfig();
+        ProjectConfig? LoadProjectConfig();
         void PersistProjectConfig(ProjectConfig toPersist);
         bool ProjectConfigFileExists();
     }

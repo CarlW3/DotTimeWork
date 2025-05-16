@@ -14,7 +14,7 @@ namespace DotTimeWork.Commands
             Description = "Creates Developer Config file. This will create a new developer config file in the current directory. The config file will be used to store the developer settings.";
         }
 
-        private void Execute(bool verboseLogging)
+        internal void Execute(bool verboseLogging)
         {
             if (_developerConfigController.IsDeveloperConfigFileExisting() && verboseLogging)
             {
