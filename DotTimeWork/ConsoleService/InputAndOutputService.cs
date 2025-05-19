@@ -14,6 +14,11 @@ namespace DotTimeWork.ConsoleService
             AnsiConsole.WriteLine(text);
         }
 
+        public void PrintMarkup(string text)
+        {
+            AnsiConsole.MarkupLine(text);
+        }
+
         public void PrintError(string text)
         {
             AnsiConsole.MarkupLine($"[red]{text}[/]");
@@ -31,6 +36,11 @@ namespace DotTimeWork.ConsoleService
             AnsiConsole.MarkupLine($"[blue]{text}[/]");
         }
 
+        public void PrintDebug(string text)
+        {
+            AnsiConsole.MarkupLine($"[grey]{text}[/]");
+        }
+
         public string AskForInput(string text, string defaultText)
         {
             return AnsiConsole.Ask<string>(text, defaultText);
@@ -41,9 +51,9 @@ namespace DotTimeWork.ConsoleService
             return AnsiConsole.Ask<int>(text,defaultValue);
         }
 
-        public string AskForStringInput(string text)
+        public T AskForInput<T>(string text)
         {
-            return AnsiConsole.Ask<string>(text);
+            return AnsiConsole.Ask<T>(text);
         }
     }
 }

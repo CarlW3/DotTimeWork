@@ -23,7 +23,7 @@ namespace DotTimeWork.Commands
             PublicOptions.IsVerbosLogging = verboseLogging;
             if (string.IsNullOrEmpty(taskId))
             {
-                taskId = _inputAndOutputService.AskForStringInput("Please define the Task to end:");
+                taskId = GetTaskToWorkOn();
             }
             else
             {
@@ -31,6 +31,23 @@ namespace DotTimeWork.Commands
             }
             var duration = _taskTimeTracker.EndTask(taskId);
             Console.WriteLine($"Task '{taskId}' ended with durarion '{duration}'");
+        }
+
+
+        private string GetTaskToWorkOn()
+        {
+            var allTasks = _taskTimeTracker.GetAllRunningTasks();
+            if (allTasks == null || allTasks.Count == 0)
+            {
+                AnsiConsole.MarkupLine($"[red]No tasks found. Please create a task first.[/]");
+                return string.Empty;
+            }
+            return AnsiConsole.Prompt(
+                 new SelectionPrompt<string>()
+                     .Title("Select [green]Task[/] to finish?")
+                     .PageSize(5)
+                     .AddChoices(allTasks.Select(x => x.Name)));
+
         }
     }
 }

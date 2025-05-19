@@ -24,6 +24,7 @@ namespace DotTimeWork
         {
             services.AddSingleton<IInputAndOutputService, InputAndOutputService>();
             services.AddSingleton<IProjectConfigDataProvider, ProjectConfigDataJson>();
+            services.AddSingleton<ITaskTimeTrackerDataProvider,TaskTimeTrackerDataJson>();
             services.AddSingleton<IProjectConfigController, ProjectConfigController>();
             services.AddSingleton<IDeveloperConfigController, DeveloperConfigController>();
             services.AddTransient<ITaskTimeTracker, TaskTimeTracker>();

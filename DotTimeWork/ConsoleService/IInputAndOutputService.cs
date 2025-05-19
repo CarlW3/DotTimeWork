@@ -2,7 +2,7 @@
 {
     public interface IInputAndOutputService
     {
-        string AskForStringInput(string text);
+        T AskForInput<T>(string text);
 
         string AskForInput(string text, string defaultText);
         int AskForInput(string text, int defaultValue);
@@ -11,5 +11,7 @@
         void PrintNormal(string text);
         void PrintSuccess(string text);
         void PrintWarning(string text);
+        void PrintMarkup(string text);
+        void PrintDebug(string text);
     }
 }

@@ -15,7 +15,7 @@ namespace UnitTests.DotTimeWork.Commands
             var taskController = new Mock<ITaskTimeTracker>();
             var inputAndOutputService = new Mock<IInputAndOutputService>();
             
-            inputAndOutputService.Setup(x => x.AskForStringInput(It.IsAny<string>())).Returns("ABCDEF");
+            inputAndOutputService.Setup(x => x.AskForInput<string>(It.IsAny<string>())).Returns("ABCDEF");
             var endTaskCommand = new EndTaskCommand(taskController.Object, inputAndOutputService.Object);
 
             // Act
@@ -23,25 +23,8 @@ namespace UnitTests.DotTimeWork.Commands
 
             // Assert
             taskController.Verify(x => x.EndTask("Task1"), Times.Once);
-            inputAndOutputService.Verify(x => x.AskForStringInput(It.IsAny<string>()), Times.Never);
+            inputAndOutputService.Verify(x => x.AskForInput<string>(It.IsAny<string>()), Times.Never);
         }
 
-        [Fact]
-        public void Execute_TaskAsQuestion()
-        {
-            // Arrange
-            var taskController = new Mock<ITaskTimeTracker>();
-            var inputAndOutputService = new Mock<IInputAndOutputService>();
-
-            inputAndOutputService.Setup(x => x.AskForStringInput(It.IsAny<string>())).Returns("ABCDEF");
-            var endTaskCommand = new EndTaskCommand(taskController.Object, inputAndOutputService.Object);
-
-            // Act
-            endTaskCommand.Execute(string.Empty, false);
-
-            // Assert
-            taskController.Verify(x => x.EndTask("ABCDEF"), Times.Once);
-            inputAndOutputService.Verify(x => x.AskForStringInput(It.IsAny<string>()), Times.Once);
-        }
     }
 }

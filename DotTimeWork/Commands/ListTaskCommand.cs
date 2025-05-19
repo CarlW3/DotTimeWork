@@ -17,7 +17,7 @@ namespace DotTimeWork.Commands
 
         private void Execute()
         {
-            var tasks = _taskTimeTracker.GetAllTasks();
+            var tasks = _taskTimeTracker.GetAllRunningTasks();
             if (tasks.Count == 0)
             {
                 Console.WriteLine("No tasks found.");

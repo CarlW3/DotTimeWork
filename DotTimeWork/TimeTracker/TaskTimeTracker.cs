@@ -1,38 +1,29 @@
-﻿using DotTimeWork.Developer;
+﻿using DotTimeWork.DataProvider;
+using DotTimeWork.Developer;
+using DotTimeWork.Helper;
 using DotTimeWork.Project;
-using System.Text.Json;
 
 namespace DotTimeWork.TimeTracker
 {
     internal class TaskTimeTracker : ITaskTimeTracker
     {
-        private const string StartTaskDataFileName = "taskStartTimeData.json";
-        private const string FinishedTaskDataFileName = "taskFinishedTimeData.json";
-
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            IgnoreReadOnlyFields = true,
-            IgnoreReadOnlyProperties = true,
-        };
-
-        private Dictionary<string, TaskData> _taskStartTimes;
-        private Dictionary<string, TaskData> _finishedTasks;
         private readonly IProjectConfigController _projectConfigController;
         private readonly IDeveloperConfigController _developerConfigController;
+        private readonly ITaskTimeTrackerDataProvider _taskTimeTrackerDataProvider;
 
-        public TaskTimeTracker(IProjectConfigController projectConfigController, IDeveloperConfigController developerConfigController)
+        public TaskTimeTracker(IProjectConfigController projectConfigController, IDeveloperConfigController developerConfigController, ITaskTimeTrackerDataProvider taskTimeTrackerDataProvider)
         {
             _projectConfigController = projectConfigController;
             _developerConfigController = developerConfigController;
-            _taskStartTimes = LoadTaskData(StartTaskDataFileName);
-            _finishedTasks = LoadTaskData(FinishedTaskDataFileName);
+            _taskTimeTrackerDataProvider = taskTimeTrackerDataProvider;
         }
 
         public void StartTask(TaskCreationData creationData)
         {
+            UpdateTimeTrackingFolder();
             var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
-            if (_taskStartTimes.ContainsKey(creationData.Name))
+            TaskData? foundTask = _taskTimeTrackerDataProvider.GetRunningTaskById(creationData.Name);
+            if (foundTask != null)
             {
                 Console.WriteLine($"Task {creationData.Name} has already been started.");
                 return;
@@ -45,104 +36,89 @@ namespace DotTimeWork.TimeTracker
                 Developer = currentDeveloper.Name
             };
             _developerConfigController.AssignTaskToCurrentDeveloper(newTask.Name);
-            _taskStartTimes[Normalize(creationData.Name)] = newTask;
-            SaveTaskData();
+            _taskTimeTrackerDataProvider.AddTask(newTask);
             Console.WriteLine($"Task {newTask.Name} started at {newTask.Started}.");
         }
 
+
+
         public TimeSpan EndTask(string taskId)
         {
-            string taskIdNormalized = Normalize(taskId);
-            if (!_taskStartTimes.TryGetValue(taskIdNormalized, out TaskData? foundTask))
+            Guard.AgainstNullOrEmpty(taskId, nameof(taskId));
+
+            UpdateTimeTrackingFolder();
+
+            TaskData? taskToFinish= _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
+
+            if (taskToFinish==null)
             {
-                Console.WriteLine($"Task {taskIdNormalized} has not been started.");
+                Console.WriteLine($"Task {taskId} has not been started.");
                 return TimeSpan.Zero;
             }
-            foundTask.Finished = DateTime.Now;
-            TimeSpan duration = foundTask.Finished - foundTask.Started;
+            
+            _taskTimeTrackerDataProvider.SetTaskAsFinished(taskToFinish);
 
-            // Move task to the finished list:
-            _taskStartTimes.Remove(taskIdNormalized);
-            _finishedTasks.Add(taskIdNormalized, foundTask);
 
-            SaveTaskData();
-            Console.WriteLine($"Task {taskIdNormalized} ended at {foundTask.Finished}. Duration: {duration}.");
+            TimeSpan duration = taskToFinish.Finished - taskToFinish.Started;
+            Console.WriteLine($"Task {taskToFinish.Name} ended at {taskToFinish.Finished}. Duration: {duration}.");
 
             return duration;
         }
 
         public TaskData GetTaskById(string taskId)
         {
-            string taskIdNormalized = Normalize(taskId);
-            if (!_taskStartTimes.TryGetValue(taskIdNormalized, out TaskData? value))
+            UpdateTimeTrackingFolder();
+            TaskData? foundRunning = _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
+            if(foundRunning != null)
             {
-                Console.WriteLine($"Task {taskIdNormalized} not found.");
-                return null;
+                return foundRunning;
             }
-            return value;
+            TaskData? foundFinished = _taskTimeTrackerDataProvider.GetFinishedTaskById(taskId);
+            if (foundFinished != null)
+            {
+                return foundFinished;
+            }
+            Console.WriteLine($"Task {taskId} not found.");
+            return null;
         }
 
         public void AddFocusTimeWork(string taskId,int finishedMinutes)
         {
-            string taskIdNormalized = Normalize(taskId);
-            TaskData foundTask = GetTaskById(taskIdNormalized);
-            if (foundTask!=null)
-            {
-                foundTask.FocusWorkTime += finishedMinutes;
-                SaveTaskData();
-            }
+            UpdateTimeTrackingFolder();
+            _taskTimeTrackerDataProvider.AddFocusTimeForTask(taskId, finishedMinutes);
         }
-        private Dictionary<string, TaskData> LoadTaskData(string file)
-        {
-            try
-            {
-                if (!File.Exists(GetDateFilePath(file)))
-                {
-                    return new Dictionary<string, TaskData>();
-                }
-                string json = File.ReadAllText(GetDateFilePath(file));
-                return JsonSerializer.Deserialize<Dictionary<string, TaskData>>(json, _jsonOptions);
-            }
-            catch
-            {
-                return new Dictionary<string, TaskData>();
-            }
-        }
+       
 
-        private void SaveTaskData()
+        public List<TaskData> GetAllRunningTasks()
         {
-            string jsonStartTask = JsonSerializer.Serialize(_taskStartTimes, _jsonOptions);
-            File.WriteAllText(GetDateFilePath(StartTaskDataFileName), jsonStartTask);
-            string jsonFinishedTask = JsonSerializer.Serialize(_finishedTasks, _jsonOptions);
-            File.WriteAllText(GetDateFilePath(FinishedTaskDataFileName), jsonFinishedTask);
-        }
-
-        public List<TaskData> GetAllTasks()
-        {
-            _taskStartTimes = LoadTaskData(StartTaskDataFileName);
-
-            return _taskStartTimes.Values.ToList();
+            UpdateTimeTrackingFolder();
+            return _taskTimeTrackerDataProvider.RunningTasks.Values.ToList();
         }
 
         public List<TaskData> GetAllFinishedTasks()
         {
-            return LoadTaskData(FinishedTaskDataFileName).Values.ToList();
+            UpdateTimeTrackingFolder();
+            return _taskTimeTrackerDataProvider.FinishedTasks.Values.ToList();
         }
 
-
-        private string GetDateFilePath(string file)
+        private void UpdateTimeTrackingFolder()
         {
-            ProjectConfig config = _projectConfigController.GetCurrentProjectConfig();
-            if(!Directory.Exists(config.TimeTrackingFolder))
+            ProjectConfig foundProject= _projectConfigController.GetCurrentProjectConfig();
+            if(foundProject == null)
             {
-                Directory.CreateDirectory(config.TimeTrackingFolder);
+                Console.WriteLine("No project found.");
+                return;
             }
-            return Path.Combine(config.TimeTrackingFolder, file);
+            string timeTrackingFolder = foundProject.TimeTrackingFolder;
+            if (string.IsNullOrEmpty(timeTrackingFolder))
+            {
+                Console.WriteLine("No time tracking folder found.");
+                return;
+            }
+            _taskTimeTrackerDataProvider.SetStoragePath(timeTrackingFolder);
         }
 
-        private static string Normalize(string taskID)
-        {
-            return taskID.Trim().ToLowerInvariant();
-        }
+
+
     }
 }

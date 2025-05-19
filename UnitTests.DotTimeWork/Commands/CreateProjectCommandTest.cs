@@ -1,4 +1,5 @@
 ﻿using DotTimeWork.Commands;
+using DotTimeWork.ConsoleService;
 using DotTimeWork.DataProvider;
 using DotTimeWork.Project;
 using Moq;
@@ -17,7 +18,8 @@ namespace UnitTests.DotTimeWork.Commands
         {
             // Arrange
             var projectConfigController = new Mock<IProjectConfigController>();
-            var createProjectCommand = new CreateProjectCommand(projectConfigController.Object);
+            Mock<IInputAndOutputService> inputAndOutputService = new Mock<IInputAndOutputService>();
+            var createProjectCommand = new CreateProjectCommand(projectConfigController.Object, inputAndOutputService.Object);
 
             // Act
             createProjectCommand.Execute(false);

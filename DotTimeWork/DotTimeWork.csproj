@@ -37,6 +37,10 @@ It works by executing single commands one after another, similar to the DotNet C
 	<ItemGroup>
 		<InternalsVisibleTo Include="UnitTests.DotTimeWork" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\DotTimeWork.Helper\DotTimeWork.Helper.csproj" />
+	</ItemGroup>
 	
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
