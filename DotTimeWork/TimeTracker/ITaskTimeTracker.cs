@@ -6,7 +6,7 @@ namespace DotTimeWork.TimeTracker
         TimeSpan EndTask(string taskId);
         void StartTask(TaskCreationData task);
 
-        List<TaskData> GetAllTasks();
+        List<TaskData> GetAllRunningTasks();
         TaskData GetTaskById(string taskId);
         void AddFocusTimeWork(string taskId, int finishedMinutes);
         List<TaskData> GetAllFinishedTasks();

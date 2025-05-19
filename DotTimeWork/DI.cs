@@ -1,4 +1,6 @@
 using DotTimeWork.Commands;
+using DotTimeWork.ConsoleService;
+using DotTimeWork.DataProvider;
 using DotTimeWork.Developer;
 using DotTimeWork.Project;
 using DotTimeWork.TimeTracker;
@@ -20,6 +22,9 @@ namespace DotTimeWork
 
         private static void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IInputAndOutputService, InputAndOutputService>();
+            services.AddSingleton<IProjectConfigDataProvider, ProjectConfigDataJson>();
+            services.AddSingleton<ITaskTimeTrackerDataProvider,TaskTimeTrackerDataJson>();
             services.AddSingleton<IProjectConfigController, ProjectConfigController>();
             services.AddSingleton<IDeveloperConfigController, DeveloperConfigController>();
             services.AddTransient<ITaskTimeTracker, TaskTimeTracker>();

@@ -1,5 +1,7 @@
 using DotTimeWork.Commands;
-using Spectre.Console;
+using DotTimeWork.ConsoleService;
+using DotTimeWork.DataProvider;
+using System.Runtime.Versioning;
 
 namespace DotTimeWork.Project
 {
@@ -8,49 +10,35 @@ namespace DotTimeWork.Project
     /// </summary>
     public class ProjectConfigController : IProjectConfigController
     {
-        private ProjectConfig _currentProjectConfig;
+        private ProjectConfig? _currentProjectConfig;
+        private readonly IProjectConfigDataProvider _projectConfigDataProvider;
+        private readonly IInputAndOutputService _inputAndOutputService;
 
-        public bool LoadProjectConfig()
+        public ProjectConfigController(IProjectConfigDataProvider projectConfigDataProvider, IInputAndOutputService inputAndOutputService)
         {
-            if (!File.Exists(GlobalConstants.GetPathToProjectConfigFile()))
-            {
-                return false;
-            }
-
-            var json = File.ReadAllText(GlobalConstants.GetPathToProjectConfigFile());
-            _currentProjectConfig = System.Text.Json.JsonSerializer.Deserialize<ProjectConfig>(json);
-            if (_currentProjectConfig == null)
-            {
-                Console.WriteLine("Failed to load project config.");
-                return false;
-            }
-            return true;
+            _inputAndOutputService = inputAndOutputService;
+            _projectConfigDataProvider = projectConfigDataProvider;
         }
 
         public void CreateProjectConfigFile()
         {
-            if (File.Exists(GlobalConstants.GetPathToProjectConfigFile()))
+            if (_projectConfigDataProvider.ProjectConfigFileExists())
             {
-                Console.WriteLine("Project config file already exists. Deleting it.");
-                File.Delete(GlobalConstants.GetPathToProjectConfigFile());
+                _inputAndOutputService.PrintNormal("Project config file already exists. Deleting it.");
+                _projectConfigDataProvider.DeleteProjectConfigFile();
             }
-            Console.WriteLine("Creating project config file...");
+            _inputAndOutputService.PrintNormal("Creating project config file...");
 
-            var projectName = AnsiConsole.Ask<string>("Please enter the project name:");
-            if (string.IsNullOrEmpty(projectName))
-            {
-                Console.WriteLine("Project name cannot be empty. Using default value of 'My Project'.");
-                projectName = "My Project";
-            }
-            var projectDescription = AnsiConsole.Ask<string>("Please enter the project description:");
+            var projectName = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_Name,"No name");
 
-            Console.WriteLine("Please enter the project start date (yyyy-MM-dd or EMPTY for today):");
-            var projectStartDate = Console.ReadLine();
-            Console.WriteLine("Please enter the project end date (yyyy-MM-dd or EMPTY for N/A):");
-            var projectEndDate = Console.ReadLine();
+            var projectDescription = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_Description,string.Empty);
 
-            Console.WriteLine("Please enter the max time per day (in hours):");
-            var maxTimePerDay = Console.ReadLine();
+            var projectStartDate = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_StartDate,DateTime.Now.ToString("yyyy-MM-dd"));
+            
+            var projectEndDate = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_EndDate, "N/A");
+
+            var maxTime = _inputAndOutputService.AskForInput(Properties.Resources.Project_Ask_TimePerDay,0);
+
 
             DateTime projectStart;
 
@@ -60,13 +48,8 @@ namespace DotTimeWork.Project
             }
             else if (!DateTime.TryParse(projectStartDate, out projectStart))
             {
-                Console.WriteLine("Invalid project start date. Using current date.");
+                _inputAndOutputService.PrintNormal("Invalid project start date. Using current date.");
                 projectStart = DateTime.Now;
-            }
-            if (!int.TryParse(maxTimePerDay, out int maxTime))
-            {
-                Console.WriteLine("Invalid max time per day. Using default value of 8 hours.");
-                maxTime = 8;
             }
 
             DateTime projectEnd;
@@ -76,7 +59,7 @@ namespace DotTimeWork.Project
             }
             else if (!DateTime.TryParse(projectEndDate, out projectEnd))
             {
-                Console.WriteLine("Invalid project end date. Using current date + 30 days.");
+                _inputAndOutputService.PrintNormal("Invalid project end date. Using current date + 30 days.");
                 projectEnd = DateTime.Now.AddDays(30);
             }
 
@@ -89,14 +72,10 @@ namespace DotTimeWork.Project
                 ProjectEnd = projectEnd == DateTime.MinValue ? null : projectEnd,
             };
 
-            var json = System.Text.Json.JsonSerializer.Serialize(_currentProjectConfig);
-            File.WriteAllText(GlobalConstants.GetPathToProjectConfigFile(), json);
-            Console.WriteLine("Project config file created.");
-            string timeTrackingFolder = Path.Combine(Environment.CurrentDirectory, _currentProjectConfig.TimeTrackingFolder);
-            Directory.CreateDirectory(timeTrackingFolder);
-            Console.WriteLine($"Time tracking folder created at {timeTrackingFolder}");
-            File.WriteAllText(Path.Combine(timeTrackingFolder, "README.txt"), "This folder contains the time tracking files for the project." + Environment.NewLine + "Created: " + DateTime.Now);
-            Console.WriteLine($"README.txt file created in {timeTrackingFolder}");
+            _projectConfigDataProvider.PersistProjectConfig(_currentProjectConfig);
+
+            _inputAndOutputService.PrintSuccess("Project config file created.");
+
         }
 
         public ProjectConfig GetCurrentProjectConfig()
@@ -105,9 +84,9 @@ namespace DotTimeWork.Project
             {
                 if (PublicOptions.IsVerbosLogging)
                 {
-                    Console.WriteLine("Project config file not loaded. Loading now...");
+                    _inputAndOutputService.PrintNormal("Project config file not loaded. Loading now...");
                 }
-                LoadProjectConfig();
+                _currentProjectConfig=_projectConfigDataProvider.LoadProjectConfig();
             }
             return _currentProjectConfig;
         }

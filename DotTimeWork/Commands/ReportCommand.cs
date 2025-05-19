@@ -120,7 +120,7 @@ namespace DotTimeWork.Commands
             writer.WriteLine("<tr><th>Task Name</th><th>Working time</th><th>Focus Time</th><th>Developer</th></tr>");
             DateTime dateTime = DateTime.Now;
             // Aufgaben in die Tabelle einfügen
-            foreach (var task in _taskTimeTracker.GetAllTasks())
+            foreach (var task in _taskTimeTracker.GetAllRunningTasks())
             {
                 writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(dateTime - task.Started)}</td><td>{task.FocusWorkTime}</td><td>{task.Developer}</td></tr>");
             }

@@ -63,9 +63,13 @@ namespace DotTimeWork.Commands
             }
         }
 
+        /// <summary>
+        /// Copied code to End Task
+        /// </summary>
+        /// <returns></returns>
         private string GetTaskToWorkOn()
         {
-            var allTasks = _taskTimeTracker.GetAllTasks();
+            var allTasks = _taskTimeTracker.GetAllRunningTasks();
             if (allTasks == null || allTasks.Count == 0)
             {
                 AnsiConsole.MarkupLine($"[red]No tasks found. Please create a task first.[/]");

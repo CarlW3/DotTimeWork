@@ -1,6 +1,6 @@
-﻿using DotTimeWork.Helper;
+﻿using DotTimeWork.ConsoleService;
+using DotTimeWork.Helper;
 using DotTimeWork.TimeTracker;
-using Spectre.Console;
 using System.CommandLine;
 
 namespace DotTimeWork.Commands
@@ -8,10 +8,12 @@ namespace DotTimeWork.Commands
     internal class DetailsTaskCommand:Command
     {
         private readonly ITaskTimeTracker _taskTimeTracker;
+        private readonly IInputAndOutputService _inputAndOutputService;
 
-        public DetailsTaskCommand(ITaskTimeTracker taskTimeTracker) : base("Details", "Shows details of a specific Task")
+        public DetailsTaskCommand(ITaskTimeTracker taskTimeTracker,IInputAndOutputService inputAndOutputService) : base("Details", "Shows details of a specific Task")
         {
             _taskTimeTracker = taskTimeTracker;
+            _inputAndOutputService = inputAndOutputService;
             AddOption(PublicOptions.TaskIdOption);
             this.SetHandler(Execute, PublicOptions.TaskIdOption,PublicOptions.VerboseLogging);
         }
@@ -21,24 +23,24 @@ namespace DotTimeWork.Commands
             PublicOptions.IsVerbosLogging = verboseLogging;
             if (string.IsNullOrEmpty(taskId))
             {
-                taskId = AnsiConsole.Ask<string>("Please define the Task to show details for:");
+                taskId = _inputAndOutputService.AskForInput<string>("Please define the Task to show details for:");
             }
             else
             {
-                Console.WriteLine($"Showing details for task '{taskId}'.");
+                _inputAndOutputService.PrintInfo($"Showing details for task '{taskId}'.");
             }
             var selectedTask = _taskTimeTracker.GetTaskById(taskId);
             if (selectedTask != null)
             {
-                AnsiConsole.MarkupLine($"[green]Task Name:[/] {selectedTask.Name}");
-                AnsiConsole.MarkupLine($"[green]Developer:[/] {selectedTask.Developer}");
+                _inputAndOutputService.PrintMarkup($"[green]Task Name:[/] {selectedTask.Name}");
+                _inputAndOutputService.PrintMarkup($"[green]Developer:[/] {selectedTask.Developer}");
                 if(!string.IsNullOrWhiteSpace(selectedTask.Description))
                 {
-                    AnsiConsole.MarkupLine($"[green]Description:[/] {selectedTask.Description}");
+                    _inputAndOutputService.PrintMarkup($"[green]Description:[/] {selectedTask.Description}");
                 }
-                AnsiConsole.MarkupLine($"[green]Start Time:[/] {selectedTask.Started.ToString()}");
-                AnsiConsole.MarkupLine($"[green]Working Time (Minutes):[/] {TimeHelper.GetWorkingTimeHumanReadable((int)((DateTime.Now - selectedTask.Started).TotalMinutes))}");
-                AnsiConsole.MarkupLine($"[green]Focus Working Time (Minutes):[/] {TimeHelper.GetWorkingTimeHumanReadable(selectedTask.FocusWorkTime)}");
+                _inputAndOutputService.PrintMarkup($"[green]Start Time:[/] {selectedTask.Started.ToString()}");
+                _inputAndOutputService.PrintMarkup($"[green]Working Time (Minutes):[/] {TimeHelper.GetWorkingTimeHumanReadable((int)((DateTime.Now - selectedTask.Started).TotalMinutes))}");
+                _inputAndOutputService.PrintMarkup($"[green]Focus Working Time (Minutes):[/] {TimeHelper.GetWorkingTimeHumanReadable(selectedTask.FocusWorkTime)}");
             }
         }
     }
