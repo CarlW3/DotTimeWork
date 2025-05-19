@@ -118,7 +118,9 @@ namespace DotTimeWork.TimeTracker
             _taskTimeTrackerDataProvider.SetStoragePath(timeTrackingFolder);
         }
 
-
-
+        public void UpdateTask(TaskData selectedTask)
+        {
+            _taskTimeTrackerDataProvider.UpdateTask(selectedTask);
+        }
     }
 }

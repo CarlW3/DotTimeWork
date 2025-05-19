@@ -30,6 +30,13 @@ namespace DotTimeWork.Commands
             Description = "Include finished tasks in the report. If not specified, the default behavior will be used."
         };
 
+        public static Option<string> CommentText = new Option<string>("--comment", "The comment text")
+        {
+            IsRequired = false,
+            ArgumentHelpName = "comment",
+            Description = "The comment text. If not specified, the comment needs to be entered during execution"
+        };
+
         public static Option<bool> VerboseLogging=new Option<bool>("--verbose", "Enable verbose logging")
         {
             IsRequired = false,

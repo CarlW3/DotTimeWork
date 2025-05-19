@@ -41,6 +41,7 @@ namespace DotTimeWork
             services.AddTransient<Command, ListTaskCommand>();
             services.AddTransient<Command, StartTaskCommand>();
             services.AddTransient<Command, WorkCommand>();
+            services.AddTransient<Command, CommentCommand>();
             services.AddTransient<Command, ReportCommand>();
         }
 

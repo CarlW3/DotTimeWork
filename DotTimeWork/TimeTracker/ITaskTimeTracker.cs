@@ -10,5 +10,6 @@ namespace DotTimeWork.TimeTracker
         TaskData GetTaskById(string taskId);
         void AddFocusTimeWork(string taskId, int finishedMinutes);
         List<TaskData> GetAllFinishedTasks();
+        void UpdateTask(TaskData selectedTask);
     }
 }
