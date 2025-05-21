@@ -1,7 +1,9 @@
 ﻿using DotTimeWork.ConsoleService;
 using DotTimeWork.Helper;
 using DotTimeWork.TimeTracker;
+using Spectre.Console;
 using System.CommandLine;
+using System.Text;
 
 namespace DotTimeWork.Commands
 {
@@ -37,6 +39,23 @@ namespace DotTimeWork.Commands
                 if(!string.IsNullOrWhiteSpace(selectedTask.Description))
                 {
                     _inputAndOutputService.PrintMarkup($"[green]Description:[/] {selectedTask.Description}");
+                }
+                if(selectedTask.Comments!=null&& selectedTask.Comments.Count > 0)
+                {
+
+                    StringBuilder comments = new StringBuilder();
+                    foreach (var comment in selectedTask.Comments)
+                    {
+                        comments.AppendLine($"[white]{comment.Created.ToString()}[/] | [yellow]{comment.Developer}[/] | {comment.Comment}");
+                    }
+                    Panel commentPanel = new Panel(new Markup(comments.ToString().TrimEnd()));
+                    commentPanel.Header("Comments");
+                    commentPanel.Border = BoxBorder.Rounded;
+                    commentPanel.BorderStyle = new Style(Color.Green);
+                    AnsiConsole.Write(commentPanel);
+
+
+
                 }
                 _inputAndOutputService.PrintMarkup($"[green]Start Time:[/] {selectedTask.Started.ToString()}");
                 _inputAndOutputService.PrintMarkup($"[green]Working Time (Minutes):[/] {TimeHelper.GetWorkingTimeHumanReadable((int)((DateTime.Now - selectedTask.Started).TotalMinutes))}");

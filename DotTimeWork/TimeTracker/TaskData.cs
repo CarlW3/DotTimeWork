@@ -2,6 +2,13 @@
 
 namespace DotTimeWork.TimeTracker
 {
+    public class TaskComment
+    {
+        public DateTime Created { get; set; }
+        public string Developer { get; set; } = string.Empty;
+        public string Comment { get; set; } = string.Empty;
+    }
+
     public class TaskData
     {
         public string Name { get; set; }
@@ -17,11 +24,12 @@ namespace DotTimeWork.TimeTracker
         /// </summary>
         public DateTime Finished { get; set; }
 
-        public List<string> Comments { get; set; } = new List<string>();
+        public List<TaskComment> Comments { get; set; } = new List<TaskComment>();
 
-        internal void AddComment(string comment)
+        internal void AddComment(TaskComment comment)
         {
-            Guard.AgainstNullOrEmpty(comment, nameof(comment));
+            Guard.AgainstNull(comment, nameof(comment));
+            Guard.AgainstNullOrEmpty(comment.Comment, nameof(comment));
             Comments.Add(comment);
         }
     }

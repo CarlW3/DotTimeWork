@@ -42,6 +42,12 @@ namespace DotTimeWork.Commands
                 AnsiConsole.MarkupLine($"[red]No tasks found. Please create a task first.[/]");
                 return string.Empty;
             }
+            if(allTasks.Count == 1)
+            {
+                string toReturn = allTasks.First().Name;
+                AnsiConsole.MarkupLine($"[green]Only one task found. Using '{toReturn}' as task.[/]");
+                return toReturn;
+            }
             return AnsiConsole.Prompt(
                  new SelectionPrompt<string>()
                      .Title("Select [green]Task[/] to finish?")

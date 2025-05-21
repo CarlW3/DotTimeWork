@@ -5,6 +5,7 @@ using Spectre.Console;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Diagnostics;
+using System.Text;
 
 namespace DotTimeWork.Commands
 {
@@ -117,15 +118,34 @@ namespace DotTimeWork.Commands
         {
             writer.WriteLine("<h2>Active Tasks</h2>");
             writer.WriteLine("<table>");
-            writer.WriteLine("<tr><th>Task Name</th><th>Working time</th><th>Focus Time</th><th>Developer</th></tr>");
+            writer.WriteLine("<tr><th>Task Name</th><th>Working time</th><th>Focus Time</th><th>Developer</th><th>Comments</th></tr>");
             DateTime dateTime = DateTime.Now;
             // Aufgaben in die Tabelle einfügen
             foreach (var task in _taskTimeTracker.GetAllRunningTasks())
             {
-                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(dateTime - task.Started)}</td><td>{task.FocusWorkTime}</td><td>{task.Developer}</td></tr>");
+                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(dateTime - task.Started)}</td><td>{task.FocusWorkTime}</td><td>{task.Developer}</td><td>{GetComments(task)}</td></tr>");
             }
 
             writer.WriteLine("</table>");
+        }
+
+        private static string GetComments(TaskData task)
+        {
+            StringBuilder comments = new StringBuilder();
+            if (task.Comments != null && task.Comments.Count > 0)
+            {
+                comments.AppendLine("<ul>");
+                foreach (var comment in task.Comments)
+                {
+                    comments.AppendLine($"<li>{comment.Created.ToString()} | {comment.Developer} | {comment.Comment}</li>");
+                }
+                comments.AppendLine("</ul>");
+            }
+            else
+            {
+                comments.AppendLine("No comments");
+            }
+            return comments.ToString().Trim();
         }
 
         private void GenerateTableFinishedTask(StreamWriter writer)
