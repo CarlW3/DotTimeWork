@@ -13,5 +13,6 @@
         void PrintWarning(string text);
         void PrintMarkup(string text);
         void PrintDebug(string text);
+        string ShowTaskSelection(string[] availableTasks, string promptText);
     }
 }

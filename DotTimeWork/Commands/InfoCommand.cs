@@ -48,6 +48,8 @@ namespace DotTimeWork.Commands
                 Shows information about the current version of DotTimeWork
                 [green bold]Report[/]
                 Creates a report of the current project in CSV or HTML format
+                [green bold]Comment[/]
+                Add a comment to a Task
                 """;
 
 

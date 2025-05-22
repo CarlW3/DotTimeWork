@@ -41,6 +41,27 @@ namespace DotTimeWork.ConsoleService
             AnsiConsole.MarkupLine($"[grey]{text}[/]");
         }
 
+        public string ShowTaskSelection(string[] availableTasks, string promptText)
+        {
+
+            if (availableTasks == null || availableTasks.Length == 0)
+            {
+                AnsiConsole.MarkupLine($"[red]No tasks found. Please create a task first.[/]");
+                return string.Empty;
+            }
+            if (availableTasks.Length == 1)
+            {
+                string toReturn = availableTasks[0];
+                AnsiConsole.MarkupLine($"[green]Only one task found. Using '{toReturn}' as task.[/]");
+                return toReturn;
+            }
+            return AnsiConsole.Prompt(
+                 new SelectionPrompt<string>()
+                     .Title(promptText)
+                     .PageSize(5)
+                     .AddChoices(availableTasks));
+        }
+
         public string AskForInput(string text, string defaultText)
         {
             return AnsiConsole.Ask<string>(text, defaultText);

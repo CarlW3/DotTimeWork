@@ -1,4 +1,6 @@
-﻿using DotTimeWork.Helper;
+﻿using DotTimeWork.Commands;
+using DotTimeWork.ConsoleService;
+using DotTimeWork.Helper;
 using DotTimeWork.TimeTracker;
 using System.Text.Json;
 
@@ -8,6 +10,8 @@ namespace DotTimeWork.DataProvider
     {
         private Dictionary<string, TaskData> _runningTasks;
         private Dictionary<string, TaskData> _finishedTasks;
+
+        private readonly IInputAndOutputService _inputAndOutputService;
 
 
         private const string StartTaskDataFileName = "taskStartTimeData.json";
@@ -21,6 +25,10 @@ namespace DotTimeWork.DataProvider
             IgnoreReadOnlyProperties = true,
         };
 
+        public TaskTimeTrackerDataJson(IInputAndOutputService inputAndOutputService)
+        {
+            _inputAndOutputService = inputAndOutputService;
+        }
 
 
         /// <summary>
@@ -95,12 +103,12 @@ namespace DotTimeWork.DataProvider
             TaskData? taskData = GetRunningTaskById(taskIdNormalized);
             if (taskData == null)
             {
-                Console.WriteLine($"Task {task.Name} not found.");
+                _inputAndOutputService.PrintWarning($"Task {task.Name} not found.");
                 return false;
             }
             if(taskData!=task)
             {
-                Console.WriteLine("ERROR: Task Instance not known - not from the system.");
+                _inputAndOutputService.PrintWarning("ERROR: Task Instance not known - not from the system.");
                 throw new InvalidOperationException("Task instance not known - not from the system.");
             }
             task.Finished = DateTime.Now;
@@ -140,6 +148,10 @@ namespace DotTimeWork.DataProvider
             {
                 string jsonFinishedTask = JsonSerializer.Serialize(_finishedTasks, _jsonOptions);
                 File.WriteAllText(GetDateFilePath(FinishedTaskDataFileName), jsonFinishedTask);
+                if(PublicOptions.IsVerbosLogging)
+                {
+                    _inputAndOutputService.PrintDebug("Finished tasks saved to " + GetDateFilePath(FinishedTaskDataFileName) + ".");
+                }
             }
         }
 
@@ -149,6 +161,10 @@ namespace DotTimeWork.DataProvider
             {
                 string jsonStartTask = JsonSerializer.Serialize(_runningTasks, _jsonOptions);
                 File.WriteAllText(GetDateFilePath(StartTaskDataFileName), jsonStartTask);
+                if (PublicOptions.IsVerbosLogging)
+                {
+                    _inputAndOutputService.PrintDebug("Running tasks saved to " + GetDateFilePath(StartTaskDataFileName) + ".");
+                }
             }
         }
 
@@ -171,6 +187,29 @@ namespace DotTimeWork.DataProvider
             }
             taskData.FocusWorkTime += finishedMinutes;
             SaveRunningTasks();
+        }
+
+        public void UpdateTask(TaskData selectedTask)
+        {
+            Guard.AgainstNull(selectedTask, nameof(selectedTask));
+            string taskIdNormalized = NormalizeTaskId(selectedTask.Name);
+            bool taskUpdated=false;
+            if (RunningTasks.ContainsKey(taskIdNormalized))
+            {
+                RunningTasks[taskIdNormalized] = selectedTask;
+                SaveRunningTasks();
+                taskUpdated = true;
+            }
+            if(FinishedTasks.ContainsKey(taskIdNormalized))
+            {
+                FinishedTasks[taskIdNormalized] = selectedTask;
+                SaveFinishedTasks();
+                taskUpdated = true;
+            }
+            if (PublicOptions.IsVerbosLogging)
+            {
+                _inputAndOutputService.PrintDebug(taskIdNormalized + " Task Update status: " + (taskUpdated ? "OK" : "Failed - Task not found."));
+            }
         }
     }
 }

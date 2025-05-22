@@ -60,8 +60,6 @@ namespace DotTimeWork.TimeTracker
 
 
             TimeSpan duration = taskToFinish.Finished - taskToFinish.Started;
-            Console.WriteLine($"Task {taskToFinish.Name} ended at {taskToFinish.Finished}. Duration: {duration}.");
-
             return duration;
         }
 
@@ -118,7 +116,9 @@ namespace DotTimeWork.TimeTracker
             _taskTimeTrackerDataProvider.SetStoragePath(timeTrackingFolder);
         }
 
-
-
+        public void UpdateTask(TaskData selectedTask)
+        {
+            _taskTimeTrackerDataProvider.UpdateTask(selectedTask);
+        }
     }
 }

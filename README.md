@@ -7,6 +7,8 @@ It works by executing single commands one after another, similar to the DotNet C
 
 - HTML Report with Project Info
 - Project Config with Description Text
+- Comments for Tasks
+- Error Handling and Refactorings
 
 
 ## How to install - Release
@@ -53,6 +55,7 @@ Run command Work to start tracking time for the task -> Focus Time.
 - `list`: List all active working tasks and how long they have been running.
 - `Work`: Starts tracking time for the selected task.
 - `Report`: Creates a CSV or HTML report of the tracked time for the current project.
+- `Comment`: Can add a comment to an active running task.
 
 # Future
 - Add more commands to manage tasks and projects.

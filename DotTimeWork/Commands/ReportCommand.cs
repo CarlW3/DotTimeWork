@@ -5,6 +5,7 @@ using Spectre.Console;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Diagnostics;
+using System.Text;
 
 namespace DotTimeWork.Commands
 {
@@ -26,13 +27,15 @@ namespace DotTimeWork.Commands
             generateCsvSubCommand.AddOption(PublicOptions.OutputFile);
             generateCsvSubCommand.AddOption(PublicOptions.OpenReportAfterCreate);
             generateCsvSubCommand.AddOption(PublicOptions.ReportIncludeFinishedTasks);
+            generateCsvSubCommand.AddOption(PublicOptions.ReportIncludeComments);
             generateCsvSubCommand.SetHandler(ExecuteCsvReport, PublicOptions.OutputFile, PublicOptions.OpenReportAfterCreate, PublicOptions.VerboseLogging);
             AddCommand(generateCsvSubCommand);
             var generateHtmlSubCommand = new Command("html", "Generate a HTML report of all active and completed Tasks");
             generateHtmlSubCommand.AddOption(PublicOptions.OutputFile);
             generateHtmlSubCommand.AddOption(PublicOptions.OpenReportAfterCreate);
             generateHtmlSubCommand.AddOption(PublicOptions.ReportIncludeFinishedTasks);
-            generateHtmlSubCommand.SetHandler(ExecuteHtmlReport, PublicOptions.OutputFile, PublicOptions.ReportIncludeFinishedTasks, PublicOptions.OpenReportAfterCreate, PublicOptions.VerboseLogging);
+            generateHtmlSubCommand.AddOption(PublicOptions.ReportIncludeComments);
+            generateHtmlSubCommand.SetHandler(ExecuteHtmlReport, PublicOptions.OutputFile, PublicOptions.ReportIncludeFinishedTasks, PublicOptions.ReportIncludeComments, PublicOptions.OpenReportAfterCreate, PublicOptions.VerboseLogging);
             AddCommand(generateHtmlSubCommand);
             this.SetHandler(ExecuteReportGeneration);
         }
@@ -42,7 +45,7 @@ namespace DotTimeWork.Commands
             AnsiConsole.WriteLine("Please specify the report format: csv or html");
         }
 
-        private void ExecuteHtmlReport(string outputFile, bool includeFinishedTasks, bool openAfterCreate, bool verboseLogging)
+        private void ExecuteHtmlReport(string outputFile, bool includeFinishedTasks, bool includeComments, bool openAfterCreate, bool verboseLogging)
         {
             PublicOptions.IsVerbosLogging = verboseLogging;
             if (string.IsNullOrEmpty(outputFile))
@@ -66,7 +69,7 @@ namespace DotTimeWork.Commands
                 
                 GenerateInfoSection(writer);
 
-                GenerateTableActiveTask(writer);
+                GenerateTableActiveTask(writer,includeComments);
 
                 var allFinishedTasks = _taskTimeTracker.GetAllFinishedTasks();
                 bool anyFinishedTasks = allFinishedTasks.Any();
@@ -76,7 +79,7 @@ namespace DotTimeWork.Commands
                 }
                 if (includeFinishedTasks && anyFinishedTasks)
                 {
-                    GenerateTableFinishedTask(writer);
+                    GenerateTableFinishedTask(writer, includeComments);
                 }
                 writer.WriteLine("<p /><hr /><p>Dot Time Worker tool developed by Carl-Philip Wenz</p>");
                 writer.WriteLine("</body>");
@@ -113,22 +116,43 @@ namespace DotTimeWork.Commands
             writer.WriteLine("</ul>");
         }
 
-        private void GenerateTableActiveTask(StreamWriter writer)
+        private void GenerateTableActiveTask(StreamWriter writer, bool includeComments)
         {
             writer.WriteLine("<h2>Active Tasks</h2>");
             writer.WriteLine("<table>");
-            writer.WriteLine("<tr><th>Task Name</th><th>Working time</th><th>Focus Time</th><th>Developer</th></tr>");
+            string commentHeader = includeComments ? "<th>Comments</th>" : "";
+            writer.WriteLine($"<tr><th>Task Name</th><th>Working time</th><th>Focus Time</th><th>Developer</th>{commentHeader}</tr>");
             DateTime dateTime = DateTime.Now;
             // Aufgaben in die Tabelle einfügen
             foreach (var task in _taskTimeTracker.GetAllRunningTasks())
             {
-                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(dateTime - task.Started)}</td><td>{task.FocusWorkTime}</td><td>{task.Developer}</td></tr>");
+                string commentColumn = includeComments ? $"<td>{GetComments(task)}</td>" : "";
+                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(dateTime - task.Started)}</td><td>{task.FocusWorkTime}</td><td>{task.Developer}</td>{commentColumn}</tr>");
             }
 
             writer.WriteLine("</table>");
         }
 
-        private void GenerateTableFinishedTask(StreamWriter writer)
+        private static string GetComments(TaskData task)
+        {
+            StringBuilder comments = new StringBuilder();
+            if (task.Comments != null && task.Comments.Count > 0)
+            {
+                comments.AppendLine("<ul>");
+                foreach (var comment in task.Comments)
+                {
+                    comments.AppendLine($"<li>{comment.Created.ToString()} | {comment.Developer} | {comment.Comment}</li>");
+                }
+                comments.AppendLine("</ul>");
+            }
+            else
+            {
+                comments.AppendLine("No comments");
+            }
+            return comments.ToString().Trim();
+        }
+
+        private void GenerateTableFinishedTask(StreamWriter writer, bool includeComments)
         {
             writer.WriteLine("<h2>Completed Tasks</h2>");
             writer.WriteLine("<table>");

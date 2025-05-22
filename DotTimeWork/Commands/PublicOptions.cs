@@ -30,6 +30,20 @@ namespace DotTimeWork.Commands
             Description = "Include finished tasks in the report. If not specified, the default behavior will be used."
         };
 
+        public static Option<bool> ReportIncludeComments = new Option<bool>("--include-comments", () => true, "Include task comments in the report")
+        {
+            IsRequired = false,
+            ArgumentHelpName = "include-comments",
+            Description = "Include Comments added to the Task. If not specified, the default behavior will be used."
+        };
+
+        public static Option<string> CommentText = new Option<string>("--comment", "The comment text")
+        {
+            IsRequired = false,
+            ArgumentHelpName = "comment",
+            Description = "The comment text. If not specified, the comment needs to be entered during execution"
+        };
+
         public static Option<bool> VerboseLogging=new Option<bool>("--verbose", "Enable verbose logging")
         {
             IsRequired = false,
@@ -40,7 +54,6 @@ namespace DotTimeWork.Commands
         {
             VerboseLogging.AddAlias("-v");
             TaskIdOption.AddAlias("-t");
-            ReportIncludeFinishedTasks.AddAlias("-if");
         }
         /// <summary>
         /// Can be activated by Command Line option to allow more verbose logging

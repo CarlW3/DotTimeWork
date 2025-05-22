@@ -4,7 +4,7 @@ namespace DotTimeWork
 {
     public static class GlobalConstants
     {
-        public const string RELEASE_VERSION = "1.1";
+        public const string RELEASE_VERSION = "1.5";
 
         private const string ProjectConfigFilePath = "dottimework.json";
         private const string DeveloperConfigFilePath = "developer.json";
