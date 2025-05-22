@@ -1,4 +1,5 @@
-﻿using DotTimeWork.TimeTracker;
+﻿using DotTimeWork.ConsoleService;
+using DotTimeWork.TimeTracker;
 using Spectre.Console;
 using System.CommandLine;
 
@@ -7,9 +8,11 @@ namespace DotTimeWork.Commands
     internal class WorkCommand : Command
     {
         private readonly ITaskTimeTracker _taskTimeTracker;
-        public WorkCommand(ITaskTimeTracker taskTimeTracker) : base("Work", "Active Time Tracking for a specific Task - Focus Work")
+        private readonly IInputAndOutputService _inputAndOutputService;
+        public WorkCommand(ITaskTimeTracker taskTimeTracker,IInputAndOutputService inputAndOutputService) : base("Work", "Active Time Tracking for a specific Task - Focus Work")
         {
             _taskTimeTracker = taskTimeTracker;
+            _inputAndOutputService = inputAndOutputService;
             AddOption(PublicOptions.TaskIdOption);
             this.SetHandler(Execute, PublicOptions.TaskIdOption, PublicOptions.VerboseLogging);
         }
@@ -19,13 +22,12 @@ namespace DotTimeWork.Commands
             PublicOptions.IsVerbosLogging = verboseLogging;
             if (string.IsNullOrEmpty(taskId))
             {
-                taskId = GetTaskToWorkOn();
-                AnsiConsole.MarkupLine($"Task to work on: [bold green]{taskId}[/]");
-
+                var availableTasks = _taskTimeTracker.GetAllRunningTasks().Select(x => x.Name).ToArray();
+                taskId = _inputAndOutputService.ShowTaskSelection(availableTasks, "Select [green]Task[/] for working?");
             }
             if (verboseLogging)
             {
-                AnsiConsole.MarkupLine($"[grey]Working on task '{taskId}'...[/]");
+                _inputAndOutputService.PrintDebug($"Working on task '{taskId}'.");
             }
             var selectedTask = _taskTimeTracker.GetTaskById(taskId);
             if (selectedTask != null)
@@ -61,26 +63,6 @@ namespace DotTimeWork.Commands
                 AnsiConsole.MarkupLine($"[red]Task with ID '{taskId}' not found.[/]");
 
             }
-        }
-
-        /// <summary>
-        /// Copied code to End Task
-        /// </summary>
-        /// <returns></returns>
-        private string GetTaskToWorkOn()
-        {
-            var allTasks = _taskTimeTracker.GetAllRunningTasks();
-            if (allTasks == null || allTasks.Count == 0)
-            {
-                AnsiConsole.MarkupLine($"[red]No tasks found. Please create a task first.[/]");
-                return string.Empty;
-            }
-            return AnsiConsole.Prompt(
-                 new SelectionPrompt<string>()
-                     .Title("Select [green]Task[/] to start?")
-                     .PageSize(5)
-                     .AddChoices(allTasks.Select(x => x.Name)));
-
         }
 
         private static void HaveABreak(int breakTimeInSeconds)

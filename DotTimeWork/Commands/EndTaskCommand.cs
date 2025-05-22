@@ -1,6 +1,5 @@
 ﻿using DotTimeWork.ConsoleService;
 using DotTimeWork.TimeTracker;
-using Spectre.Console;
 using System.CommandLine;
 
 namespace DotTimeWork.Commands
@@ -16,6 +15,36 @@ namespace DotTimeWork.Commands
             AddOption(PublicOptions.TaskIdOption);
             this.SetHandler(Execute,PublicOptions.TaskIdOption,PublicOptions.VerboseLogging);
             Description = "Marks task as finished";
+
+            Command allTasks=new Command("All", "Ends all running tasks");
+            allTasks.SetHandler(ExecuteAllTasks, PublicOptions.VerboseLogging);
+            AddCommand(allTasks);
+        }
+
+        private void ExecuteAllTasks(bool verboseLogging)
+        {
+            PublicOptions.IsVerbosLogging = verboseLogging;
+            var runningTasks = _taskTimeTracker.GetAllRunningTasks();
+            if (runningTasks.Count == 0)
+            {
+                _inputAndOutputService.PrintNormal("No running tasks found.");
+                return;
+            }
+            if (verboseLogging)
+            {
+                _inputAndOutputService.PrintDebug($"Stopping {runningTasks.Count} tasks now...");
+            }
+            int counter = 0;
+            foreach (var task in runningTasks)
+            {
+                var duration = _taskTimeTracker.EndTask(task.Name);
+                _inputAndOutputService.PrintNormal($"Task '{task.Name}' ended with duration '{duration}'");
+                counter++;
+            }
+            if (verboseLogging)
+            {
+                _inputAndOutputService.PrintDebug($"All {counter} tasks ended");
+            }
         }
 
         internal void Execute(string taskId, bool verboseLogging)
@@ -23,37 +52,15 @@ namespace DotTimeWork.Commands
             PublicOptions.IsVerbosLogging = verboseLogging;
             if (string.IsNullOrEmpty(taskId))
             {
-                taskId = GetTaskToWorkOn();
+                var availableTasks = _taskTimeTracker.GetAllRunningTasks().Select(x => x.Name).ToArray();
+                taskId = _inputAndOutputService.ShowTaskSelection(availableTasks, "Select [green]Task[/] to finish?");
             }
             else
             {
                 Console.WriteLine($"Ending task '{taskId}'.");
             }
             var duration = _taskTimeTracker.EndTask(taskId);
-            Console.WriteLine($"Task '{taskId}' ended with durarion '{duration}'");
-        }
-
-
-        private string GetTaskToWorkOn()
-        {
-            var allTasks = _taskTimeTracker.GetAllRunningTasks();
-            if (allTasks == null || allTasks.Count == 0)
-            {
-                AnsiConsole.MarkupLine($"[red]No tasks found. Please create a task first.[/]");
-                return string.Empty;
-            }
-            if(allTasks.Count == 1)
-            {
-                string toReturn = allTasks.First().Name;
-                AnsiConsole.MarkupLine($"[green]Only one task found. Using '{toReturn}' as task.[/]");
-                return toReturn;
-            }
-            return AnsiConsole.Prompt(
-                 new SelectionPrompt<string>()
-                     .Title("Select [green]Task[/] to finish?")
-                     .PageSize(5)
-                     .AddChoices(allTasks.Select(x => x.Name)));
-
+            _inputAndOutputService.PrintNormal($"Task '{taskId}' ended with durarion '{duration}'");
         }
     }
 }

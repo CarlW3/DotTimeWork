@@ -25,7 +25,8 @@ namespace DotTimeWork.Commands
             PublicOptions.IsVerbosLogging = verboseLogging;
             if (string.IsNullOrEmpty(taskId))
             {
-                taskId = _inputAndOutputService.AskForInput<string>("Please define the Task to show details for:");
+                var availableTasks = _taskTimeTracker.GetAllRunningTasks().Select(x => x.Name).ToArray();
+                taskId = _inputAndOutputService.ShowTaskSelection(availableTasks, "Select [green]Task[/] for Details?");
             }
             else
             {
@@ -53,9 +54,6 @@ namespace DotTimeWork.Commands
                     commentPanel.Border = BoxBorder.Rounded;
                     commentPanel.BorderStyle = new Style(Color.Green);
                     AnsiConsole.Write(commentPanel);
-
-
-
                 }
                 _inputAndOutputService.PrintMarkup($"[green]Start Time:[/] {selectedTask.Started.ToString()}");
                 _inputAndOutputService.PrintMarkup($"[green]Working Time (Minutes):[/] {TimeHelper.GetWorkingTimeHumanReadable((int)((DateTime.Now - selectedTask.Started).TotalMinutes))}");
