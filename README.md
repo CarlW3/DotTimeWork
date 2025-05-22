@@ -7,6 +7,8 @@ It works by executing single commands one after another, similar to the DotNet C
 
 - HTML Report with Project Info
 - Project Config with Description Text
+- Comments for Tasks
+- Error Handling and Refactorings
 
 
 ## How to install - Release
