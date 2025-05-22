@@ -16,6 +16,7 @@ namespace DotTimeWork.Commands
         {
             _taskTimeTracker = taskTimeTracker;
             _inputAndOutputService = inputAndOutputService;
+            Description = Properties.Resources.Details_Description;
             AddOption(PublicOptions.TaskIdOption);
             this.SetHandler(Execute, PublicOptions.TaskIdOption,PublicOptions.VerboseLogging);
         }
@@ -35,8 +36,8 @@ namespace DotTimeWork.Commands
             var selectedTask = _taskTimeTracker.GetTaskById(taskId);
             if (selectedTask != null)
             {
-                _inputAndOutputService.PrintMarkup($"[green]Task Name:[/] {selectedTask.Name}");
-                _inputAndOutputService.PrintMarkup($"[green]Developer:[/] {selectedTask.Developer}");
+                _inputAndOutputService.PrintMarkup($"[green]{Properties.Resources.List_Column_TaskName}:[/] {selectedTask.Name}");
+                _inputAndOutputService.PrintMarkup($"[green]{Properties.Resources.List_Column_Developer}:[/] {selectedTask.Developer}");
                 if(!string.IsNullOrWhiteSpace(selectedTask.Description))
                 {
                     _inputAndOutputService.PrintMarkup($"[green]Description:[/] {selectedTask.Description}");

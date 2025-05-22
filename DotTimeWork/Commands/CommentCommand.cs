@@ -29,7 +29,8 @@ namespace DotTimeWork.Commands
 
             if (string.IsNullOrEmpty(taskId))
             {
-                taskId = GetTaskToWorkOn();
+                var availableTasks = _taskTimeTracker.GetAllRunningTasks().Select(x => x.Name).ToArray();
+                taskId = _inputAndOutputService.ShowTaskSelection(availableTasks, "Select [green]Task[/] to comment?");
             }
             else if (verboseLogging)
             {
@@ -65,26 +66,6 @@ namespace DotTimeWork.Commands
             }
         }
 
-        private string GetTaskToWorkOn()
-        {
-            var allTasks = _taskTimeTracker.GetAllRunningTasks();
-            if (allTasks == null || allTasks.Count == 0)
-            {
-                AnsiConsole.MarkupLine($"[red]No tasks found. Please create a task first.[/]");
-                return string.Empty;
-            }
-            if (allTasks.Count == 1)
-            {
-                string toReturn = allTasks.First().Name;
-                AnsiConsole.MarkupLine($"[green]Only one task found. Using '{toReturn}' as task.[/]");
-                return toReturn;
-            }
-            return AnsiConsole.Prompt(
-                 new SelectionPrompt<string>()
-                     .Title("Select [green]Task[/] to add a Comment?")
-                     .PageSize(5)
-                     .AddChoices(allTasks.Select(x => x.Name)));
 
-        }
     }
 }

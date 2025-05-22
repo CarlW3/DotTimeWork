@@ -132,4 +132,50 @@
   <data name="Project_Ask_TimePerDay" xml:space="preserve">
     <value>Max time per day (in hours):</value>
   </data>
+  <data name="List_Column_TaskName" xml:space="preserve">
+    <value>Task Name</value>
+  </data>
+  <data name="List_Column_Developer" xml:space="preserve">
+    <value>Developer</value>
+  </data>
+  <data name="List_Column_StartTime" xml:space="preserve">
+    <value>Start Time</value>
+  </data>
+  <data name="List_Column_WorkingTime" xml:space="preserve">
+    <value>Working Time (Minutes)</value>
+  </data>
+  <data name="List_Column_FocusTime" xml:space="preserve">
+    <value>Focus Working Time (Minutes)</value>
+  </data>
+  <data name="General_NoTaskAvailable" xml:space="preserve">
+    <value>No Task is available.</value>
+  </data>
+  <data name="List_Description" xml:space="preserve">
+    <value>Lists all tasks. This will list all tasks in the current project. The tasks will be listed in the order they were created.</value>
+  </data>
+  <data name="Details_Description" xml:space="preserve">
+    <value>Shows details of a specific Task.</value>
+  </data>
+  <data name="StartTask_Description" xml:space="preserve">
+    <value>Can start / mark TimeStamp when a new Task was started working on.</value>
+  </data>
+  <data name="StartTask_CreateTask" xml:space="preserve">
+    <value>Task ID to create:</value>
+  </data>
+  <data name="StartTask_CreateTask_Failed" xml:space="preserve">
+    <value>Task '{0}' already exists. Please enter a different task ID.</value>
+    <comment>0 - Task ID entered</comment>
+  </data>
+  <data name="StartTask_CreateTask_SmallDescription" xml:space="preserve">
+    <value>Small Task Description:</value>
+  </data>
+  <data name="Developer_Description" xml:space="preserve">
+    <value>Creates Developer Config file. This will create a new developer config file in the current directory. The config file will be used to store the developer settings.</value>
+  </data>
+  <data name="Developer_Create_ExistsAlready" xml:space="preserve">
+    <value>Developer config file already exists. Overwrite it...</value>
+  </data>
+  <data name="Developer_Create_Success" xml:space="preserve">
+    <value>Developer config file created successfully.</value>
+  </data>
 </root>

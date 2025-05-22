@@ -1,6 +1,7 @@
 ﻿using DotTimeWork.Commands;
 using DotTimeWork.ConsoleService;
 using DotTimeWork.Developer;
+using DotTimeWork.Properties;
 using Moq;
 
 namespace UnitTests.DotTimeWork.Commands
@@ -41,6 +42,7 @@ namespace UnitTests.DotTimeWork.Commands
             // Assert
             mockDeveloperConfigController.Verify(x => x.CreateDeveloperConfigFile(), Times.Once);
             mockInputAndOutputService.Verify(x => x.PrintWarning(It.IsAny<string>()), Times.Once);
+            mockInputAndOutputService.Verify(x => x.PrintSuccess(Resources.Developer_Create_Success), Times.Once);
         }
     }
 }
