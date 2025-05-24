@@ -23,5 +23,10 @@
                 return $"{minutes / 1440} days and "+(rest/60)+" hours";
             }
         }
+
+        public static string GetCurrentDayString()
+        {
+            return DateTime.Now.ToString("yyyy-MM-dd");
+        }
     }
 }

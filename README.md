@@ -3,12 +3,13 @@ DotTimeWork is a simple time tracking commandline tool that helps you keep track
 It works by executing single commands one after another, similar to the DotNet CLI.
 
 ## Latest Update
-**Under development: Verion 1.1**
+**Under development: Verion 1.5**
 
 - HTML Report with Project Info
 - Project Config with Description Text
 - Comments for Tasks
 - Error Handling and Refactorings
+- CSV Export
 
 
 ## How to install - Release
