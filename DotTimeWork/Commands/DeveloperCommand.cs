@@ -5,7 +5,7 @@ using System.CommandLine;
 
 namespace DotTimeWork.Commands
 {
-    internal class DeveloperCommand:Command
+    internal class DeveloperCommand : Command
     {
         private readonly IDeveloperConfigController _developerConfigController;
         private readonly IInputAndOutputService _inputAndOutputService;
@@ -14,7 +14,7 @@ namespace DotTimeWork.Commands
             _developerConfigController = developerConfigController;
             _inputAndOutputService = inputAndOutputService;
             this.SetHandler(Execute, PublicOptions.VerboseLogging);
-            Description = "Creates Developer Config file. This will create a new developer config file in the current directory. The config file will be used to store the developer settings.";
+            Description = Properties.Resources.Developer_Description;
 
         }
 
@@ -22,13 +22,11 @@ namespace DotTimeWork.Commands
         {
             if (_developerConfigController.IsDeveloperConfigFileExisting() && verboseLogging)
             {
-                _inputAndOutputService.PrintWarning("Developer config file already exists. Overwrite it...");
+                _inputAndOutputService.PrintWarning(Properties.Resources.Developer_Create_ExistsAlready);
             }
             _developerConfigController.CreateDeveloperConfigFile();
-            if (verboseLogging)
-            {
-                _inputAndOutputService.PrintDebug("Developer config file created successfully.");
-            }
+
+            _inputAndOutputService.PrintSuccess(Properties.Resources.Developer_Create_Success);
         }
     }
 }

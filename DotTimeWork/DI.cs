@@ -13,10 +13,14 @@ namespace DotTimeWork
     {
         private static IServiceProvider _serviceProvider;
 
+
+        public static int CountOfDependencies { get; private set; }
+
         public static void InitDependencyInjection()
         {
             var serviceCollection = new ServiceCollection();
             ConfigureServices(serviceCollection);
+            CountOfDependencies = serviceCollection.Count;
             _serviceProvider = serviceCollection.BuildServiceProvider();
         }
 

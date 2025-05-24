@@ -1,9 +1,4 @@
 ﻿using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DotTimeWork.ConsoleService
 {
@@ -46,7 +41,7 @@ namespace DotTimeWork.ConsoleService
 
             if (availableTasks == null || availableTasks.Length == 0)
             {
-                AnsiConsole.MarkupLine($"[red]No tasks found. Please create a task first.[/]");
+                AnsiConsole.MarkupLine($"[red]{Properties.Resources.General_NoTaskAvailable} Please create a task first.[/]");
                 return string.Empty;
             }
             if (availableTasks.Length == 1)

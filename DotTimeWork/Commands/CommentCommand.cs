@@ -1,7 +1,6 @@
 ﻿using DotTimeWork.ConsoleService;
 using DotTimeWork.Developer;
 using DotTimeWork.TimeTracker;
-using Spectre.Console;
 using System.CommandLine;
 
 namespace DotTimeWork.Commands
@@ -29,7 +28,8 @@ namespace DotTimeWork.Commands
 
             if (string.IsNullOrEmpty(taskId))
             {
-                taskId = GetTaskToWorkOn();
+                var availableTasks = _taskTimeTracker.GetAllRunningTasks().Select(x => x.Name).ToArray();
+                taskId = _inputAndOutputService.ShowTaskSelection(availableTasks, "Select [green]Task[/] to comment?");
             }
             else if (verboseLogging)
             {
@@ -39,10 +39,10 @@ namespace DotTimeWork.Commands
             var selectedTask = _taskTimeTracker.GetTaskById(taskId);
             if (string.IsNullOrEmpty(commentText))
             {
-                var comment = AnsiConsole.Ask<string>("Please enter the comment:");
+                var comment = _inputAndOutputService.AskForInput<string>("Please enter the comment:");
                 if (string.IsNullOrEmpty(comment))
                 {
-                    AnsiConsole.MarkupLine($"[red]Comment cannot be empty.[/]");
+                    _inputAndOutputService.PrintWarning($"Comment cannot be empty.");
                     return;
                 }
                 commentText = comment;
@@ -57,34 +57,14 @@ namespace DotTimeWork.Commands
                     Comment = commentText
                 });
                 _taskTimeTracker.UpdateTask(selectedTask);
-                AnsiConsole.MarkupLine($"[green]Comment added to task '{taskId}'.[/]");
+                _inputAndOutputService.PrintSuccess($"Comment added to task '{taskId}'.");
             }
             else
             {
-                AnsiConsole.MarkupLine($"[red]Task '{taskId}' not found.[/]");
+                _inputAndOutputService.PrintWarning($"Task '{taskId}' not found.");
             }
         }
 
-        private string GetTaskToWorkOn()
-        {
-            var allTasks = _taskTimeTracker.GetAllRunningTasks();
-            if (allTasks == null || allTasks.Count == 0)
-            {
-                AnsiConsole.MarkupLine($"[red]No tasks found. Please create a task first.[/]");
-                return string.Empty;
-            }
-            if (allTasks.Count == 1)
-            {
-                string toReturn = allTasks.First().Name;
-                AnsiConsole.MarkupLine($"[green]Only one task found. Using '{toReturn}' as task.[/]");
-                return toReturn;
-            }
-            return AnsiConsole.Prompt(
-                 new SelectionPrompt<string>()
-                     .Title("Select [green]Task[/] to add a Comment?")
-                     .PageSize(5)
-                     .AddChoices(allTasks.Select(x => x.Name)));
 
-        }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using DotTimeWork.ConsoleService;
 using DotTimeWork.Project;
-using Spectre.Console;
 using System.CommandLine;
 
 namespace DotTimeWork.Commands

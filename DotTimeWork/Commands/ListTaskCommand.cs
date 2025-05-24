@@ -12,7 +12,7 @@ namespace DotTimeWork.Commands
         {
             _taskTimeTracker = taskTimeTracker;
             this.SetHandler(Execute);
-            Description = "Lists all tasks. This will list all tasks in the current project. The tasks will be listed in the order they were created.";
+            Description = Properties.Resources.List_Description;
         }
 
         private void Execute()
@@ -20,16 +20,16 @@ namespace DotTimeWork.Commands
             var tasks = _taskTimeTracker.GetAllRunningTasks();
             if (tasks.Count == 0)
             {
-                Console.WriteLine("No tasks found.");
+                Console.WriteLine(Properties.Resources.General_NoTaskAvailable);
             }
             else
             {
                 Table table = new Table();
-                table.AddColumn("Task Name");
-                table.AddColumn("Developer");
-                table.AddColumn("Start Time");
-                table.AddColumn("Working Time (Minutes)");
-                table.AddColumn("Focus Working Time (Minutes)");
+                table.AddColumn(Properties.Resources.List_Column_TaskName);
+                table.AddColumn(Properties.Resources.List_Column_Developer);
+                table.AddColumn(Properties.Resources.List_Column_StartTime);
+                table.AddColumn(Properties.Resources.List_Column_WorkingTime);
+                table.AddColumn(Properties.Resources.List_Column_FocusTime);
                 DateTime now = DateTime.Now;
                 foreach (var task in tasks)
                 {

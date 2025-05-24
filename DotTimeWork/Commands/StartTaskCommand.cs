@@ -7,13 +7,13 @@ namespace DotTimeWork.Commands
     internal class StartTaskCommand : Command
     {
         private readonly ITaskTimeTracker _taskTimeTracker;
-        public StartTaskCommand(ITaskTimeTracker taskTimeTracker) : base("Start", "Starts a new tracking")
+        public StartTaskCommand(ITaskTimeTracker taskTimeTracker) : base("Start", Properties.Resources.StartTask_Description)
         {
             AddAlias("New");
             _taskTimeTracker = taskTimeTracker;
             AddOption(PublicOptions.TaskIdOption);
             this.SetHandler(Execute, PublicOptions.TaskIdOption, PublicOptions.VerboseLogging);
-            Description = "Can start / mark TimeStamp when a new Task was started working on.";
+            Description = Properties.Resources.StartTask_Description;
         }
 
         private void Execute(string taskId, bool verboseLogging)
@@ -25,14 +25,14 @@ namespace DotTimeWork.Commands
                 bool taskExists = false;
                 do
                 {
-                    taskId = AnsiConsole.Ask<string>("Task ID to create:");
+                    taskId = AnsiConsole.Ask<string>(Properties.Resources.StartTask_CreateTask);
                     taskExists = TaskExists(taskId);
                     if (taskExists)
                     {
-                        Console.WriteLine($"Task '{taskId}' already exists. Please enter a different task ID.");
+                        Console.WriteLine(string.Format(Properties.Resources.StartTask_CreateTask_Failed,taskId));
                     }
                 } while (taskExists);
-                description = AnsiConsole.Ask<string>("Small Task Description:");
+                description = AnsiConsole.Ask<string>(Properties.Resources.StartTask_CreateTask_SmallDescription);
             }
 
             else

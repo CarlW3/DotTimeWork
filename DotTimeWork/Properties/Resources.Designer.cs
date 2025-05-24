@@ -61,6 +61,141 @@ namespace DotTimeWork.Properties {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Shows details of a specific Task. ähnelt.
+        /// </summary>
+        internal static string Details_Description {
+            get {
+                return ResourceManager.GetString("Details_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Developer config file already exists. Overwrite it... ähnelt.
+        /// </summary>
+        internal static string Developer_Create_ExistsAlready {
+            get {
+                return ResourceManager.GetString("Developer_Create_ExistsAlready", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Developer config file created successfully. ähnelt.
+        /// </summary>
+        internal static string Developer_Create_Success {
+            get {
+                return ResourceManager.GetString("Developer_Create_Success", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Creates Developer Config file. This will create a new developer config file in the current directory. The config file will be used to store the developer settings. ähnelt.
+        /// </summary>
+        internal static string Developer_Description {
+            get {
+                return ResourceManager.GetString("Developer_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No Task is available. ähnelt.
+        /// </summary>
+        internal static string General_NoTaskAvailable {
+            get {
+                return ResourceManager.GetString("General_NoTaskAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Show information about DotTimeWork ähnelt.
+        /// </summary>
+        internal static string Info_Description {
+            get {
+                return ResourceManager.GetString("Info_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die It is written in C# and uses .NET 8.0. ähnelt.
+        /// </summary>
+        internal static string Info_Development {
+            get {
+                return ResourceManager.GetString("Info_Development", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die [bold green]DotTimeWork[/] is a time tracking tool for developers and freelancers. ähnelt.
+        /// </summary>
+        internal static string Info_FirstLine {
+            get {
+                return ResourceManager.GetString("Info_FirstLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die It helps you to track your time spent on tasks and projects. It is a command line tool that runs on Windows, Linux and MacOS. ähnelt.
+        /// </summary>
+        internal static string Info_SecondLine {
+            get {
+                return ResourceManager.GetString("Info_SecondLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Developer ähnelt.
+        /// </summary>
+        internal static string List_Column_Developer {
+            get {
+                return ResourceManager.GetString("List_Column_Developer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Focus Working Time (Minutes) ähnelt.
+        /// </summary>
+        internal static string List_Column_FocusTime {
+            get {
+                return ResourceManager.GetString("List_Column_FocusTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Start Time ähnelt.
+        /// </summary>
+        internal static string List_Column_StartTime {
+            get {
+                return ResourceManager.GetString("List_Column_StartTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Task Name ähnelt.
+        /// </summary>
+        internal static string List_Column_TaskName {
+            get {
+                return ResourceManager.GetString("List_Column_TaskName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Working Time (Minutes) ähnelt.
+        /// </summary>
+        internal static string List_Column_WorkingTime {
+            get {
+                return ResourceManager.GetString("List_Column_WorkingTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Lists all tasks. This will list all tasks in the current project. The tasks will be listed in the order they were created. ähnelt.
+        /// </summary>
+        internal static string List_Description {
+            get {
+                return ResourceManager.GetString("List_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Description: ähnelt.
         /// </summary>
         internal static string Project_Ask_Description {
@@ -102,6 +237,42 @@ namespace DotTimeWork.Properties {
         internal static string Project_Ask_TimePerDay {
             get {
                 return ResourceManager.GetString("Project_Ask_TimePerDay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Task ID to create: ähnelt.
+        /// </summary>
+        internal static string StartTask_CreateTask {
+            get {
+                return ResourceManager.GetString("StartTask_CreateTask", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Task &apos;{0}&apos; already exists. Please enter a different task ID. ähnelt.
+        /// </summary>
+        internal static string StartTask_CreateTask_Failed {
+            get {
+                return ResourceManager.GetString("StartTask_CreateTask_Failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Small Task Description: ähnelt.
+        /// </summary>
+        internal static string StartTask_CreateTask_SmallDescription {
+            get {
+                return ResourceManager.GetString("StartTask_CreateTask_SmallDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Can start / mark TimeStamp when a new Task was started working on. ähnelt.
+        /// </summary>
+        internal static string StartTask_Description {
+            get {
+                return ResourceManager.GetString("StartTask_Description", resourceCulture);
             }
         }
     }
