@@ -178,4 +178,16 @@
   <data name="Developer_Create_Success" xml:space="preserve">
     <value>Developer config file created successfully.</value>
   </data>
+  <data name="Info_Description" xml:space="preserve">
+    <value>Show information about DotTimeWork</value>
+  </data>
+  <data name="Info_FirstLine" xml:space="preserve">
+    <value>[bold green]DotTimeWork[/] is a time tracking tool for developers and freelancers.</value>
+  </data>
+  <data name="Info_SecondLine" xml:space="preserve">
+    <value>It helps you to track your time spent on tasks and projects. It is a command line tool that runs on Windows, Linux and MacOS.</value>
+  </data>
+  <data name="Info_Development" xml:space="preserve">
+    <value>It is written in C# and uses .NET 8.0.</value>
+  </data>
 </root>

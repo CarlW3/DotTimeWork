@@ -10,7 +10,10 @@ namespace DotTimeWork
         {
             "-?",
             "--help",
-            "-h"
+            "-h",
+            "-H",
+            "/h",
+            "/?"
         };
         static async Task<int> Main(string[] args)
         {

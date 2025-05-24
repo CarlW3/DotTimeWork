@@ -106,6 +106,42 @@ namespace DotTimeWork.Properties {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Show information about DotTimeWork ähnelt.
+        /// </summary>
+        internal static string Info_Description {
+            get {
+                return ResourceManager.GetString("Info_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die It is written in C# and uses .NET 8.0. ähnelt.
+        /// </summary>
+        internal static string Info_Development {
+            get {
+                return ResourceManager.GetString("Info_Development", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die [bold green]DotTimeWork[/] is a time tracking tool for developers and freelancers. ähnelt.
+        /// </summary>
+        internal static string Info_FirstLine {
+            get {
+                return ResourceManager.GetString("Info_FirstLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die It helps you to track your time spent on tasks and projects. It is a command line tool that runs on Windows, Linux and MacOS. ähnelt.
+        /// </summary>
+        internal static string Info_SecondLine {
+            get {
+                return ResourceManager.GetString("Info_SecondLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Developer ähnelt.
         /// </summary>
         internal static string List_Column_Developer {

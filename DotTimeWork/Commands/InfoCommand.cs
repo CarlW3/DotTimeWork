@@ -10,7 +10,7 @@ namespace DotTimeWork.Commands
 {
     internal class InfoCommand : Command
     {
-        public InfoCommand() : base("Info", "Show information about DotTimeWork")
+        public InfoCommand() : base("Info", Properties.Resources.Info_Description)
         {
             this.SetHandler(Execute);
         }
@@ -22,10 +22,9 @@ namespace DotTimeWork.Commands
                     new FigletText($"DotTimeWork Version {GlobalConstants.RELEASE_VERSION}")
                         .Centered()
                             .Color(Color.Yellow));
-            AnsiConsole.MarkupLine("[bold green]DotTimeWork[/] is a time tracking tool for developers and freelancers.");
-            AnsiConsole.MarkupLine("It helps you to track your time spent on tasks and projects.");
-            AnsiConsole.MarkupLine("It is a command line tool that runs on Windows, Linux and MacOS.");
-            AnsiConsole.MarkupLine("It is written in C# and uses .NET 8.0.");
+            AnsiConsole.MarkupLine(Properties.Resources.Info_FirstLine);
+            AnsiConsole.MarkupLine(Properties.Resources.Info_SecondLine);
+            AnsiConsole.MarkupLine(Properties.Resources.Info_Development);
             AnsiConsole.WriteLine();
             AnsiConsole.WriteLine();
             string includedFunctions =
@@ -68,6 +67,7 @@ namespace DotTimeWork.Commands
             var rule2 = new Rule("[red]Development[/]");
             AnsiConsole.Write(rule2);
             AnsiConsole.MarkupLine("[green]Developer: [/][bold]Carl-Philip Wenz[/]");
+            AnsiConsole.MarkupLine("[gray]Statistics (Count of registered DI Services): [/]"+DI.CountOfDependencies);
             AnsiConsole.MarkupLine("[gray]Development just started, so please be patient.[/]");
             AnsiConsole.WriteLine();
 

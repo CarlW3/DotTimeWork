@@ -7,7 +7,7 @@ namespace DotTimeWork.Commands
     internal class StartTaskCommand : Command
     {
         private readonly ITaskTimeTracker _taskTimeTracker;
-        public StartTaskCommand(ITaskTimeTracker taskTimeTracker) : base("Start", "Starts a new tracking")
+        public StartTaskCommand(ITaskTimeTracker taskTimeTracker) : base("Start", Properties.Resources.StartTask_Description)
         {
             AddAlias("New");
             _taskTimeTracker = taskTimeTracker;

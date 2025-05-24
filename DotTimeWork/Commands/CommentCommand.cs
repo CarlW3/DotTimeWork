@@ -1,7 +1,6 @@
 ﻿using DotTimeWork.ConsoleService;
 using DotTimeWork.Developer;
 using DotTimeWork.TimeTracker;
-using Spectre.Console;
 using System.CommandLine;
 
 namespace DotTimeWork.Commands
@@ -40,10 +39,10 @@ namespace DotTimeWork.Commands
             var selectedTask = _taskTimeTracker.GetTaskById(taskId);
             if (string.IsNullOrEmpty(commentText))
             {
-                var comment = AnsiConsole.Ask<string>("Please enter the comment:");
+                var comment = _inputAndOutputService.AskForInput<string>("Please enter the comment:");
                 if (string.IsNullOrEmpty(comment))
                 {
-                    AnsiConsole.MarkupLine($"[red]Comment cannot be empty.[/]");
+                    _inputAndOutputService.PrintWarning($"Comment cannot be empty.");
                     return;
                 }
                 commentText = comment;
@@ -58,11 +57,11 @@ namespace DotTimeWork.Commands
                     Comment = commentText
                 });
                 _taskTimeTracker.UpdateTask(selectedTask);
-                AnsiConsole.MarkupLine($"[green]Comment added to task '{taskId}'.[/]");
+                _inputAndOutputService.PrintSuccess($"Comment added to task '{taskId}'.");
             }
             else
             {
-                AnsiConsole.MarkupLine($"[red]Task '{taskId}' not found.[/]");
+                _inputAndOutputService.PrintWarning($"Task '{taskId}' not found.");
             }
         }
 
