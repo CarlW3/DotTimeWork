@@ -28,5 +28,10 @@
         {
             return DateTime.Now.ToString("yyyy-MM-dd");
         }
+
+        public static string GetCurrentDayTimeString()
+        {
+            return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        }
     }
 }
