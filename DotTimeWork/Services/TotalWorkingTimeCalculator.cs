@@ -1,9 +1,4 @@
 ﻿using DotTimeWork.TimeTracker;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DotTimeWork.Services
 {
@@ -13,18 +8,25 @@ namespace DotTimeWork.Services
     internal class TotalWorkingTimeCalculator : ITotalWorkingTimeCalculator
     {
         private readonly ITaskTimeTracker _taskTimeTracker;
+        private List<TaskData> _runningTasks;
+        private List<TaskData> _finishedTasks;
+
         public TotalWorkingTimeCalculator(ITaskTimeTracker taskTimeTracker)
         {
             _taskTimeTracker = taskTimeTracker;
+        }
+
+        public void LoadTasks()
+        {
+            _runningTasks = _taskTimeTracker.GetAllRunningTasks().ToList();
+            _finishedTasks = _taskTimeTracker.GetAllFinishedTasks().ToList();
         }
 
         public int TotalMinutesFocusWorkingTime
         {
             get
             {
-                var allFinishedTasks = _taskTimeTracker.GetAllFinishedTasks();
-                var allRunningTasks = _taskTimeTracker.GetAllRunningTasks();
-                var combinedTasks = allFinishedTasks.Concat(allRunningTasks);
+                var combinedTasks = _runningTasks.Concat(_finishedTasks);
 
                 int totalMinutes = 0;
                 foreach (var task in combinedTasks)
@@ -37,14 +39,13 @@ namespace DotTimeWork.Services
 
         public TimeSpan GetTotalTimeFinishedTasks()
         {
-            var allFinishedTasks = _taskTimeTracker.GetAllFinishedTasks();
-            if (allFinishedTasks == null || !allFinishedTasks.Any())
+            if (_finishedTasks == null || !_finishedTasks.Any())
             {
                 return TimeSpan.Zero;
             }
 
             TimeSpan totalTime = TimeSpan.Zero;
-            foreach (var task in allFinishedTasks)
+            foreach (var task in _finishedTasks)
             {
                 totalTime += (task.Finished - task.Started);
             }
@@ -53,14 +54,13 @@ namespace DotTimeWork.Services
 
         public TimeSpan GetTotalTimeRunningTasks()
         {
-            var allStartedTasks = _taskTimeTracker.GetAllRunningTasks();
-            if (allStartedTasks == null || !allStartedTasks.Any())
+            if (_runningTasks == null || !_runningTasks.Any())
             {
                 return TimeSpan.Zero;
             }
 
             TimeSpan totalTime = TimeSpan.Zero;
-            foreach (var task in allStartedTasks)
+            foreach (var task in _runningTasks)
             {
                 totalTime += (DateTime.Now - task.Started);
             }
@@ -69,9 +69,7 @@ namespace DotTimeWork.Services
 
         public TimeSpan GetWorkingSpanTime()
         {
-            var allFinishedTasks = _taskTimeTracker.GetAllFinishedTasks();
-            var allStartedTasks = _taskTimeTracker.GetAllRunningTasks();
-            var combined = allFinishedTasks.Concat(allStartedTasks);
+            var combined = _runningTasks.Concat(_finishedTasks);
             var earliestStart = combined.Min(task => task.Started);
             var latestEnd = combined.Max(task => task.Finished);
             if (latestEnd == DateTime.MinValue)

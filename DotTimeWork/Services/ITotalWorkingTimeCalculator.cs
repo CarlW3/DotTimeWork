@@ -6,6 +6,7 @@ namespace DotTimeWork.Services
         TimeSpan GetTotalTimeFinishedTasks();
         TimeSpan GetTotalTimeRunningTasks();
         TimeSpan GetWorkingSpanTime();
+        void LoadTasks();
 
         int TotalMinutesFocusWorkingTime { get; }
     }

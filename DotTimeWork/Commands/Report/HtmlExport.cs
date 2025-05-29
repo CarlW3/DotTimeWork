@@ -32,6 +32,7 @@ namespace DotTimeWork.Commands.Report
             int focusWorkingTime;
             try
             {
+                _totalWorkingTimeCalculator.LoadTasks();
                 activeTasksWorkingTime = _totalWorkingTimeCalculator.GetTotalTimeRunningTasks();
                 finishedTasksWorkingTime = _totalWorkingTimeCalculator.GetTotalTimeFinishedTasks();
                 focusWorkingTime = _totalWorkingTimeCalculator.TotalMinutesFocusWorkingTime;
