@@ -10,9 +10,16 @@ namespace DotTimeWork.Commands.Report
     internal class HtmlExport
     {
         private const string HTML_CSS_STYLE =
-            "table { border-collapse: collapse; width: 100%; }" +
-            "th, td { border: 1px solid black; padding: 8px; text-align: left; }" +
-            "th { background-color: #f2f2f2; }";
+            "body { font-family: Arial, sans-serif; background: #f8f9fa; color: #222; }" +
+            "h1, h2 { color: #2a6592; }" +
+            "table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }" +
+            "th, td { border: 1px solid #bbb; padding: 8px; text-align: left; }" +
+            "th { background-color: #2a6592; color: #fff; }" +
+            "tr:nth-child(even) { background-color: #e3ecf7; }" +
+            "tr:hover { background-color: #d1e7fd; }" +
+            ".stat { font-weight: bold; color: #1b7e3c; }" +
+            ".warn { color: #b85c00; }" +
+            ".footer { color: #888; font-size: 0.9em; }";
 
         private readonly ITaskTimeTracker _taskTimeTracker;
         private readonly ITotalWorkingTimeCalculator _totalWorkingTimeCalculator;
@@ -27,50 +34,54 @@ namespace DotTimeWork.Commands.Report
 
         public bool ExecuteHtmlReport(string outputFile, bool includeFinishedTasks, bool includeComments, bool verboseLogging)
         {
-            TimeSpan activeTasksWorkingTime;
-            TimeSpan finishedTasksWorkingTime;
-            int focusWorkingTime;
             try
             {
                 _totalWorkingTimeCalculator.LoadTasks();
-                activeTasksWorkingTime = _totalWorkingTimeCalculator.GetTotalTimeRunningTasks();
-                finishedTasksWorkingTime = _totalWorkingTimeCalculator.GetTotalTimeFinishedTasks();
-                focusWorkingTime = _totalWorkingTimeCalculator.TotalMinutesFocusWorkingTime;
-            }
-            catch
-            {
-                Console.Error.WriteLine("Error calculating total working time. Please check your task data.");
-                return false;
-            }
-            try
-            {
+
+                var activeTasks = _taskTimeTracker.GetAllRunningTasks();
+                var finishedTasks = _taskTimeTracker.GetAllFinishedTasks();
+
+                TimeSpan activeTasksWorkingTime = _totalWorkingTimeCalculator.GetTotalTimeRunningTasks();
+                TimeSpan finishedTasksWorkingTime = _totalWorkingTimeCalculator.GetTotalTimeFinishedTasks();
+                int focusWorkingTime = _totalWorkingTimeCalculator.TotalMinutesFocusWorkingTime;
+
                 using (var writer = new StreamWriter(outputFile))
                 {
                     writer.WriteLine("<!DOCTYPE html>");
                     writer.WriteLine("<html>");
                     writer.WriteLine("<head>");
                     writer.WriteLine($"<title>{GlobalConstants.REPORT_HTML_TITLE}</title>");
+                    writer.WriteLine("<meta charset=\"utf-8\" />");
                     writer.WriteLine("<style>" + HTML_CSS_STYLE + "</style>");
+                    writer.WriteLine("<script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>");
                     writer.WriteLine("</head>");
                     writer.WriteLine("<body>");
                     writer.WriteLine($"<h1>{GlobalConstants.REPORT_HTML_TITLE}</h1>");
-                    writer.WriteLine("<p><strong>Generated on</strong>: " + TimeHelper.GetCurrentDayTimeString() + "</p>");
+                    writer.WriteLine($"<p><strong>Generiert am:</strong> {TimeHelper.GetCurrentDayTimeString()}</p>");
 
-                    GenerateInfoSection(writer, activeTasksWorkingTime, finishedTasksWorkingTime, focusWorkingTime);
+                    GenerateInfoSection(writer, activeTasks, finishedTasks, activeTasksWorkingTime, finishedTasksWorkingTime, focusWorkingTime);
 
-                    GenerateTableActiveTask(writer, includeComments);
 
-                    var allFinishedTasks = _taskTimeTracker.GetAllFinishedTasks();
-                    bool anyFinishedTasks = allFinishedTasks.Any();
-                    if (includeFinishedTasks && !anyFinishedTasks && verboseLogging)
+
+                    GenerateTableActiveTask(writer, activeTasks, includeComments);
+
+                    if (includeFinishedTasks)
                     {
-                        AnsiConsole.MarkupLine("[red]Requested was to include finished Tasks but no finished tasks found.[/]");
+                        if (!finishedTasks.Any() && verboseLogging)
+                        {
+                            AnsiConsole.MarkupLine("[red]Requested was to include finished Tasks but no finished tasks found.[/]");
+                        }
+                        else if (finishedTasks.Any())
+                        {
+                            GenerateTableFinishedTask(writer, finishedTasks, includeComments);
+                        }
                     }
-                    if (includeFinishedTasks && anyFinishedTasks)
-                    {
-                        GenerateTableFinishedTask(writer, includeComments);
-                    }
-                    writer.WriteLine("<p /><hr /><p>Dot Time Worker tool developed by Carl-Philip Wenz</p>");
+
+                    writer.WriteLine("<h2>Arbeitszeit-Statistik</h2>");
+                    writer.WriteLine("<canvas id=\"workChart\" width=\"400\" height=\"100\"></canvas>");
+                    WriteChartJs(writer, activeTasksWorkingTime, finishedTasksWorkingTime, focusWorkingTime);
+
+                    writer.WriteLine("<hr /><p class=\"footer\">Dot Time Worker tool entwickelt von Carl-Philip Wenz</p>");
                     writer.WriteLine("</body>");
                     writer.WriteLine("</html>");
                 }
@@ -78,78 +89,128 @@ namespace DotTimeWork.Commands.Report
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Error generating HTML report: {ex.Message}");
+                Console.Error.WriteLine($"Fehler beim Generieren des HTML-Reports: {ex.Message}");
                 return false;
             }
         }
 
-        private void GenerateInfoSection(StreamWriter writer,TimeSpan activeWorking,TimeSpan finishedWorkingTime, int focusWokringTime)
+        private void GenerateInfoSection(StreamWriter writer, List<TaskData> activeTasks, List<TaskData> finishedTasks, TimeSpan activeWorking, TimeSpan finishedWorking, int focusWorkingTime)
         {
-            TimeSpan sum= activeWorking + finishedWorkingTime;
-            writer.WriteLine($"<h2>Project</h2>");
+            TimeSpan totalWorking = activeWorking + finishedWorking;
+            int totalTasks = activeTasks.Count + finishedTasks.Count;
+            double avgFocus = totalTasks > 0 ? (double)focusWorkingTime / totalTasks : 0;
+            int plannedPerDay = _projectConfig.MaxTimePerDay;
+            int plannedTotal = plannedPerDay * (int)(DateTime.Now - _projectConfig.ProjectStart).TotalDays;
+            int actualTotal = (int)totalWorking.TotalMinutes;
+
+            writer.WriteLine("<h2>Projektübersicht</h2>");
             writer.WriteLine("<ul>");
-            writer.WriteLine($"<li>Project Name: {_projectConfig.ProjectName}</li>");
-            writer.WriteLine($"<li>Project Description: {_projectConfig.Description}</li>");
-            writer.WriteLine($"<li>Project Start Date: {_projectConfig.ProjectStart}</li>");
-            writer.WriteLine($"<li>Planned project Working Time per day: {_projectConfig.MaxTimePerDay}</li>");
-            writer.WriteLine($"<li>Total executed working Time: {TimeHelper.GetWorkingTimeHumanReadable(sum)}"
-                + $"<ul>"
-                + $"<li>Active Task Working Time</li>" + $"{TimeHelper.GetWorkingTimeHumanReadable(activeWorking)}" + $"<li>Finished Task Working Time</li>" + $"{TimeHelper.GetWorkingTimeHumanReadable(finishedWorkingTime)}" +
-                "</ul>"
-                + "</li>");
-            writer.WriteLine($"<li>Total Focus Working Time: {TimeHelper.GetWorkingTimeHumanReadable(focusWokringTime)}</li>");
+            writer.WriteLine($"<li><span class=\"stat\">Projektname:</span> {_projectConfig.ProjectName}</li>");
+            writer.WriteLine($"<li><span class=\"stat\">Beschreibung:</span> {_projectConfig.Description}</li>");
+            writer.WriteLine($"<li><span class=\"stat\">Projektstart:</span> {_projectConfig.ProjectStart:yyyy-MM-dd}</li>");
+            if (_projectConfig.ProjectEnd.HasValue)
+                writer.WriteLine($"<li><span class=\"stat\">Projektende:</span> {_projectConfig.ProjectEnd:yyyy-MM-dd}</li>");
+            writer.WriteLine($"<li><span class=\"stat\">Gesamt geplante Arbeitszeit:</span> {TimeHelper.GetWorkingTimeHumanReadable(plannedTotal)}</li>");
+            writer.WriteLine($"<li><span class=\"stat\">Tatsächliche Arbeitszeit:</span> {TimeHelper.GetWorkingTimeHumanReadable(actualTotal)}</li>");
+            writer.WriteLine($"<li><span class=\"stat\">Aktive Aufgaben:</span> {activeTasks.Count}</li>");
+            writer.WriteLine($"<li><span class=\"stat\">Abgeschlossene Aufgaben:</span> {finishedTasks.Count}</li>");
+            writer.WriteLine($"<li><span class=\"stat\">Durchschnittliche Fokuszeit pro Aufgabe:</span> {TimeHelper.GetWorkingTimeHumanReadable((int)avgFocus)}</li>");
+            writer.WriteLine($"<li><span class=\"stat\">Gesamte Fokuszeit:</span> {TimeHelper.GetWorkingTimeHumanReadable(focusWorkingTime)}</li>");
             writer.WriteLine("</ul>");
         }
 
-        private void GenerateTableActiveTask(StreamWriter writer, bool includeComments)
+        private static void GenerateTableActiveTask(StreamWriter writer, List<TaskData> activeTasks, bool includeComments)
         {
-            writer.WriteLine("<h2>Active Tasks</h2>");
+            writer.WriteLine("<h2>Aktive Aufgaben</h2>");
+            if (!activeTasks.Any())
+            {
+                writer.WriteLine("<p class=\"warn\">Keine aktiven Aufgaben vorhanden.</p>");
+                return;
+            }
             writer.WriteLine("<table>");
-            string commentHeader = includeComments ? "<th>Comments</th>" : "";
-            writer.WriteLine($"<tr><th>Task Name</th><th>Working time</th><th>Focus Time</th><th>Developer</th>{commentHeader}</tr>");
-            DateTime dateTime = DateTime.Now;
-            // Aufgaben in die Tabelle einfügen
-            foreach (var task in _taskTimeTracker.GetAllRunningTasks())
+            writer.WriteLine("<tr><th>Aufgabe</th><th>Arbeitszeit</th><th>Fokuszeit</th><th>Entwickler</th>" +
+                (includeComments ? "<th>Kommentare</th>" : "") + "</tr>");
+            DateTime now = DateTime.Now;
+            foreach (var task in activeTasks)
             {
                 string commentColumn = includeComments ? $"<td>{GetComments(task)}</td>" : "";
-                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(dateTime - task.Started)}</td><td>{task.FocusWorkTime}</td><td>{task.Developer}</td>{commentColumn}</tr>");
+                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable((int)(now - task.Started).TotalMinutes)}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(task.FocusWorkTime)}</td><td>{task.Developer}</td>{commentColumn}</tr>");
             }
+            writer.WriteLine("</table>");
+        }
 
+        private void GenerateTableFinishedTask(StreamWriter writer, List<TaskData> finishedTasks, bool includeComments)
+        {
+            writer.WriteLine("<h2>Abgeschlossene Aufgaben</h2>");
+            if (!finishedTasks.Any())
+            {
+                writer.WriteLine("<p class=\"warn\">Keine abgeschlossenen Aufgaben vorhanden.</p>");
+                return;
+            }
+            writer.WriteLine("<table>");
+            writer.WriteLine("<tr><th>Aufgabe</th><th>Fokuszeit</th><th>Entwickler</th>" +
+                (includeComments ? "<th>Kommentare</th>" : "") + "</tr>");
+            foreach (var task in finishedTasks)
+            {
+                string commentColumn = includeComments ? $"<td>{GetComments(task)}</td>" : "";
+                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(task.FocusWorkTime)}</td><td>{task.Developer}</td>{commentColumn}</tr>");
+            }
             writer.WriteLine("</table>");
         }
 
         private static string GetComments(TaskData task)
         {
-            StringBuilder comments = new StringBuilder();
             if (task.Comments != null && task.Comments.Count > 0)
             {
-                comments.AppendLine("<ul>");
+                var sb = new StringBuilder("<ul>");
                 foreach (var comment in task.Comments)
                 {
-                    comments.AppendLine($"<li>{comment.Created.ToString()} | {comment.Developer} | {comment.Comment}</li>");
+                    sb.AppendLine($"<li>{comment.Created:yyyy-MM-dd HH:mm} | {comment.Developer} | {comment.Comment}</li>");
                 }
-                comments.AppendLine("</ul>");
+                sb.AppendLine("</ul>");
+                return sb.ToString();
             }
-            else
-            {
-                comments.AppendLine("No comments");
-            }
-            return comments.ToString().Trim();
+            return "Keine Kommentare";
         }
 
-        private void GenerateTableFinishedTask(StreamWriter writer, bool includeComments)
+        private static void WriteChartJs(StreamWriter writer, TimeSpan active, TimeSpan finished, int focus)
         {
-            writer.WriteLine("<h2>Completed Tasks</h2>");
-            writer.WriteLine("<table>");
-            writer.WriteLine("<tr><th>Task Name</th><th>Focus Time</th><th>Developer</th></tr>");
-            // Aufgaben in die Tabelle einfügen
-            foreach (var task in _taskTimeTracker.GetAllFinishedTasks())
-            {
-                writer.WriteLine($"<tr><td>{task.Name}</td><td>{task.FocusWorkTime}</td><td>{task.Developer}</td></tr>");
-            }
-
-            writer.WriteLine("</table>");
+            bool minutesOnly = active.TotalMinutes < 60 && finished.TotalMinutes < 60 && focus < 60;
+            writer.WriteLine(@"
+<script>
+const ctx = document.getElementById('workChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Aktive Aufgaben', 'Abgeschlossene Aufgaben', 'Fokuszeit'],
+        datasets: [{
+            label: '"+(minutesOnly?"Minuten":"Stunden")+@"',
+            data: [
+                " + (minutesOnly?(int)active.TotalMinutes:(int)active.TotalHours) + @",
+                " + (minutesOnly ? (int)finished.TotalMinutes:(int)finished.TotalHours) + @",
+                " + (minutesOnly ? focus:focus/60) + @"
+            ],
+            backgroundColor: [
+                'rgba(42, 101, 146, 0.7)',
+                'rgba(27, 126, 60, 0.7)',
+                'rgba(184, 92, 0, 0.7)'
+            ],
+            borderColor: [
+                'rgba(42, 101, 146, 1)',
+                'rgba(27, 126, 60, 1)',
+                'rgba(184, 92, 0, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        scales: {
+            y: { beginAtZero: true }
         }
-
+    }
+});
+</script>
+");
+        }
     }
 }
