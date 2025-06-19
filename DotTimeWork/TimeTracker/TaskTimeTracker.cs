@@ -90,13 +90,13 @@ namespace DotTimeWork.TimeTracker
         public List<TaskData> GetAllRunningTasks()
         {
             UpdateTimeTrackingFolder();
-            return _taskTimeTrackerDataProvider.RunningTasks.Values.ToList();
+            return _taskTimeTrackerDataProvider.GetAllRunningTasksForAllDevelopers();
         }
 
         public List<TaskData> GetAllFinishedTasks()
         {
             UpdateTimeTrackingFolder();
-            return _taskTimeTrackerDataProvider.FinishedTasks.Values.ToList();
+            return _taskTimeTrackerDataProvider.GetAllFinishedTasksForAllDevelopers();
         }
 
         private void UpdateTimeTrackingFolder()

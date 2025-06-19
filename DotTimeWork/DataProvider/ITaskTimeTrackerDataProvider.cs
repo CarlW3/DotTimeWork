@@ -14,5 +14,7 @@ namespace DotTimeWork.DataProvider
         void SetStoragePath(string path);
         bool SetTaskAsFinished(TaskData task);
         void UpdateTask(TaskData selectedTask);
+        List<TaskData> GetAllRunningTasksForAllDevelopers();
+        List<TaskData> GetAllFinishedTasksForAllDevelopers();
     }
 }
