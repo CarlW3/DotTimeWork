@@ -1,6 +1,7 @@
 ﻿using DotTimeWork.Commands.Report;
 using DotTimeWork.Helper;
 using DotTimeWork.Project;
+using DotTimeWork.Services;
 using DotTimeWork.TimeTracker;
 using Spectre.Console;
 using System.CommandLine;
@@ -14,11 +15,13 @@ namespace DotTimeWork.Commands
     {
         private readonly ITaskTimeTracker _taskTimeTracker;
         private readonly IProjectConfigController _projectConfigController;
+        private readonly ITotalWorkingTimeCalculator _totalWorkingTimeCalculator;
 
-        public ReportCommand(ITaskTimeTracker taskTimeTracker,IProjectConfigController projectConfigController) : base("Report", "Generate a report of all active and completed Tasks")
+        public ReportCommand(ITaskTimeTracker taskTimeTracker,IProjectConfigController projectConfigController, ITotalWorkingTimeCalculator totalWorkingTimeCalculator) : base("Report", "Generate a report of all active and completed Tasks")
         {
             _projectConfigController = projectConfigController;
             _taskTimeTracker = taskTimeTracker;
+            _totalWorkingTimeCalculator = totalWorkingTimeCalculator;
             var generateCsvSubCommand = new Command("csv", "Generate a CSV report of all active and completed Tasks");
             generateCsvSubCommand.AddOption(PublicOptions.OutputFile);
             generateCsvSubCommand.AddOption(PublicOptions.OpenReportAfterCreate);
@@ -51,7 +54,7 @@ namespace DotTimeWork.Commands
 
             AnsiConsole.MarkupLine($"[green]Started generating HTML report at:[/] {outputFile}");
 
-            HtmlExport htmlExport = new HtmlExport(_taskTimeTracker, _projectConfigController.GetCurrentProjectConfig());
+            HtmlExport htmlExport = new HtmlExport(_taskTimeTracker, _projectConfigController.GetCurrentProjectConfig(), _totalWorkingTimeCalculator);
             if (htmlExport.ExecuteHtmlReport(outputFile, includeFinishedTasks, includeComments, verboseLogging))
             {
                 if (verboseLogging)

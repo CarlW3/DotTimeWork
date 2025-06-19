@@ -20,6 +20,7 @@ namespace DotTimeWork.Commands
         {
             PublicOptions.IsVerbosLogging = verboseLogging;
             string description = string.Empty;
+            TaskType taskType = TaskType.Other;
             if (string.IsNullOrWhiteSpace(taskId))
             {
                 bool taskExists = false;
@@ -29,12 +30,22 @@ namespace DotTimeWork.Commands
                     taskExists = TaskExists(taskId);
                     if (taskExists)
                     {
-                        Console.WriteLine(string.Format(Properties.Resources.StartTask_CreateTask_Failed,taskId));
+                        Console.WriteLine(string.Format(Properties.Resources.StartTask_CreateTask_Failed, taskId));
                     }
                 } while (taskExists);
                 description = AnsiConsole.Ask<string>(Properties.Resources.StartTask_CreateTask_SmallDescription);
-            }
 
+                // Prompt for TaskType (optional)
+                var typeChoices = Enum.GetNames(typeof(TaskType));
+                var selectedType = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("Select task type:")
+                        .AddChoices(typeChoices));
+                if (Enum.TryParse<TaskType>(selectedType, out var parsedType))
+                {
+                    taskType = parsedType;
+                }
+            }
             else
             {
                 description = "-defined by system-";
@@ -44,7 +55,12 @@ namespace DotTimeWork.Commands
             {
                 AnsiConsole.MarkupLine($"[grey]Task creation started....[/]");
             }
-            _taskTimeTracker.StartTask(new TaskCreationData { Name = taskId, Description = description });
+            _taskTimeTracker.StartTask(new TaskCreationData
+            {
+                Name = taskId,
+                Description = description,
+                TaskType = taskType
+            });
         }
 
         private bool TaskExists(string taskId)

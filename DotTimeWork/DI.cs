@@ -3,6 +3,7 @@ using DotTimeWork.ConsoleService;
 using DotTimeWork.DataProvider;
 using DotTimeWork.Developer;
 using DotTimeWork.Project;
+using DotTimeWork.Services;
 using DotTimeWork.TimeTracker;
 using Microsoft.Extensions.DependencyInjection;
 using System.CommandLine;
@@ -32,6 +33,7 @@ namespace DotTimeWork
             services.AddSingleton<IProjectConfigController, ProjectConfigController>();
             services.AddSingleton<IDeveloperConfigController, DeveloperConfigController>();
             services.AddTransient<ITaskTimeTracker, TaskTimeTracker>();
+            services.AddTransient<ITotalWorkingTimeCalculator, TotalWorkingTimeCalculator>();
             RegisterCommands(services);
         }
 

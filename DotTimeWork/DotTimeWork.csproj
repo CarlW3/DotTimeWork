@@ -25,6 +25,16 @@ It works by executing single commands one after another, similar to the DotNet C
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Commands\Report\HtmlExportStyle.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Commands\Report\HtmlExportStyle.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
