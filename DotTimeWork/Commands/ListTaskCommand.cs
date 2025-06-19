@@ -33,7 +33,16 @@ namespace DotTimeWork.Commands
                 DateTime now = DateTime.Now;
                 foreach (var task in tasks)
                 {
-                    table.AddRow(task.Name, task.Developer, task.Started.ToString(), TimeHelper.GetWorkingTimeHumanReadable((int)((now - task.Started).TotalMinutes)), TimeHelper.GetWorkingTimeHumanReadable(task.FocusWorkTime));
+                    foreach (var kvp in task.DeveloperWorkTimes)
+                    {
+                        table.AddRow(
+                            task.Name,
+                            kvp.Key,
+                            task.Started.ToString(),
+                            TimeHelper.GetWorkingTimeHumanReadable((int)((now - task.Started).TotalMinutes)),
+                            TimeHelper.GetWorkingTimeHumanReadable(kvp.Value)
+                        );
+                    }
                 }
                 AnsiConsole.Write(table);
             }

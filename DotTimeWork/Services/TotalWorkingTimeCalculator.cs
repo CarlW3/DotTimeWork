@@ -29,9 +29,9 @@ namespace DotTimeWork.Services
                 var combinedTasks = _runningTasks.Concat(_finishedTasks);
 
                 int totalMinutes = 0;
-                foreach (var task in combinedTasks)
+                foreach (var task in combinedTasks.SelectMany(t => t.DeveloperWorkTimes))
                 {
-                    totalMinutes += task.FocusWorkTime;
+                    totalMinutes += task.Value;
                 }
                 return totalMinutes;
             }

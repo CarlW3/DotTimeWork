@@ -134,13 +134,14 @@ namespace DotTimeWork.Commands.Report
                 return;
             }
             writer.WriteLine("<table>");
-            writer.WriteLine("<tr><th>Aufgabe</th><th>Arbeitszeit</th><th>Fokuszeit</th><th>Entwickler</th>" +
+            writer.WriteLine("<tr><th>Aufgabe</th><th>Arbeitszeit</th><th>Fokuszeit(en) pro Entwickler</th>" +
                 (includeComments ? "<th>Kommentare</th>" : "") + "</tr>");
             DateTime now = DateTime.Now;
             foreach (var task in activeTasks)
             {
                 string commentColumn = includeComments ? $"<td>{GetComments(task)}</td>" : "";
-                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable((int)(now - task.Started).TotalMinutes)}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(task.FocusWorkTime)}</td><td>{task.Developer}</td>{commentColumn}</tr>");
+                string devTimes = string.Join("<br>", task.DeveloperWorkTimes.Select(kvp => $"{kvp.Key}: {TimeHelper.GetWorkingTimeHumanReadable(kvp.Value)}"));
+                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable((int)(now - task.Started).TotalMinutes)}</td><td>{devTimes}</td>{commentColumn}</tr>");
             }
             writer.WriteLine("</table>");
         }
@@ -157,12 +158,13 @@ namespace DotTimeWork.Commands.Report
                 return;
             }
             writer.WriteLine("<table>");
-            writer.WriteLine("<tr><th>Aufgabe</th><th>Fokuszeit</th><th>Entwickler</th>" +
+            writer.WriteLine("<tr><th>Aufgabe</th><th>Fokuszeit(en) pro Entwickler</th>" +
                 (includeComments ? "<th>Kommentare</th>" : "") + "</tr>");
             foreach (var task in finishedTasks)
             {
                 string commentColumn = includeComments ? $"<td>{GetComments(task)}</td>" : "";
-                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(task.FocusWorkTime)}</td><td>{task.Developer}</td>{commentColumn}</tr>");
+                string devTimes = string.Join("<br>", task.DeveloperWorkTimes.Select(kvp => $"{kvp.Key}: {TimeHelper.GetWorkingTimeHumanReadable(kvp.Value)}"));
+                writer.WriteLine($"<tr><td>{task.Name}</td><td>{devTimes}</td>{commentColumn}</tr>");
             }
             writer.WriteLine("</table>");
         }

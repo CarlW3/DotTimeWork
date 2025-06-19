@@ -8,6 +8,7 @@ namespace DotTimeWork.DataProvider
         Dictionary<string, TaskData> RunningTasks { get; }
 
         void AddFocusTimeForTask(string taskId, int finishedMinutes);
+        void AddFocusTimeForTask(string taskId, int finishedMinutes, string developer);
         void AddTask(TaskData taskData);
         TaskData? GetFinishedTaskById(string taskId);
         TaskData? GetRunningTaskById(string taskId);

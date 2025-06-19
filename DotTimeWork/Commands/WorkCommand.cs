@@ -32,6 +32,14 @@ namespace DotTimeWork.Commands
             var selectedTask = _taskTimeTracker.GetTaskById(taskId);
             if (selectedTask != null)
             {
+                // Prompt for developer name, default to current
+                string currentDev = System.Environment.UserName;
+                if (selectedTask.DeveloperWorkTimes.Count > 0)
+                {
+                    currentDev = selectedTask.DeveloperWorkTimes.ContainsKey(currentDev) ? currentDev : selectedTask.DeveloperWorkTimes.Keys.First();
+                }
+                string developer = AnsiConsole.Ask<string>("Enter developer name for booking time:", currentDev);
+
                 int howManyMinutes = AnsiConsole.Ask<int>("How many minutes do you want to work on this task? [green](default: 10)[/]", 10);
                 bool addBreaks = AnsiConsole.Confirm("Do you want to add breaks? [green](default: no)[/]", false);
                 int breakTimeInSeconds = 0;
@@ -56,7 +64,7 @@ namespace DotTimeWork.Commands
                 Console.Beep();
                 Thread.Sleep(200);
                 Console.Beep();
-                _taskTimeTracker.AddFocusTimeWork(taskId, howManyMinutes);
+                _taskTimeTracker.AddFocusTimeWork(taskId, howManyMinutes, developer);
             }
             else
             {

@@ -221,7 +221,7 @@ namespace DotTimeWork.DataProvider
             return result;
         }
 
-        public void AddFocusTimeForTask(string taskId, int finishedMinutes)
+        public void AddFocusTimeForTask(string taskId, int finishedMinutes, string developer)
         {
             TaskData? taskData = GetRunningTaskById(taskId);
             if (taskData == null)
@@ -229,8 +229,17 @@ namespace DotTimeWork.DataProvider
                 Console.WriteLine($"Task {taskId} not found.");
                 return;
             }
-            taskData.FocusWorkTime += finishedMinutes;
+            taskData.AddOrUpdateWorkTime(developer, finishedMinutes);
             SaveRunningTasks();
+        }
+
+        // Keep the old method for backward compatibility, but mark as obsolete or redirect
+        [Obsolete("Use AddFocusTimeForTask(string taskId, int finishedMinutes, string developer) instead.")]
+        public void AddFocusTimeForTask(string taskId, int finishedMinutes)
+        {
+            // Use current developer
+            var dev = _developerConfigController.CurrentDeveloperConfig?.Name ?? "unknown";
+            AddFocusTimeForTask(taskId, finishedMinutes, dev);
         }
 
         public void UpdateTask(TaskData selectedTask)
