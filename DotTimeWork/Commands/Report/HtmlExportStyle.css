@@ -1,0 +1,10 @@
+body { font-family: Arial, sans-serif; background: #f8f9fa; color: #222; }
+h1, h2 { color: #2a6592; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
+th, td { border: 1px solid #bbb; padding: 8px; text-align: left; }
+th { background-color: #2a6592; color: #fff; }
+tr:nth-child(even) { background-color: #e3ecf7; }
+tr:hover { background-color: #d1e7fd; }
+.stat { font-weight: bold; color: #1b7e3c; }
+.warn { color: #b85c00; }
+.footer { color: #888; font-size: 0.9em; }

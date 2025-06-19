@@ -9,17 +9,8 @@ namespace DotTimeWork.Commands.Report
 {
     internal class HtmlExport
     {
-        private const string HTML_CSS_STYLE =
-            "body { font-family: Arial, sans-serif; background: #f8f9fa; color: #222; }" +
-            "h1, h2 { color: #2a6592; }" +
-            "table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }" +
-            "th, td { border: 1px solid #bbb; padding: 8px; text-align: left; }" +
-            "th { background-color: #2a6592; color: #fff; }" +
-            "tr:nth-child(even) { background-color: #e3ecf7; }" +
-            "tr:hover { background-color: #d1e7fd; }" +
-            ".stat { font-weight: bold; color: #1b7e3c; }" +
-            ".warn { color: #b85c00; }" +
-            ".footer { color: #888; font-size: 0.9em; }";
+        // Path to the CSS file for HTML export styling
+        private const string CssFilePath = "Commands/Report/HtmlExportStyle.css";
 
         private readonly ITaskTimeTracker _taskTimeTracker;
         private readonly ITotalWorkingTimeCalculator _totalWorkingTimeCalculator;
@@ -32,6 +23,18 @@ namespace DotTimeWork.Commands.Report
             _totalWorkingTimeCalculator = totalWorkingTimeCalculator;
         }
 
+        /// <summary>
+        /// Loads the CSS style from the external file.
+        /// </summary>
+        private static string LoadCss()
+        {
+            var cssPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, CssFilePath.Replace('/', Path.DirectorySeparatorChar));
+            return File.Exists(cssPath) ? File.ReadAllText(cssPath) : string.Empty;
+        }
+
+        /// <summary>
+        /// Generates the HTML report and writes it to the specified output file.
+        /// </summary>
         public bool ExecuteHtmlReport(string outputFile, bool includeFinishedTasks, bool includeComments, bool verboseLogging)
         {
             try
@@ -47,24 +50,9 @@ namespace DotTimeWork.Commands.Report
 
                 using (var writer = new StreamWriter(outputFile))
                 {
-                    writer.WriteLine("<!DOCTYPE html>");
-                    writer.WriteLine("<html>");
-                    writer.WriteLine("<head>");
-                    writer.WriteLine($"<title>{GlobalConstants.REPORT_HTML_TITLE}</title>");
-                    writer.WriteLine("<meta charset=\"utf-8\" />");
-                    writer.WriteLine("<style>" + HTML_CSS_STYLE + "</style>");
-                    writer.WriteLine("<script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>");
-                    writer.WriteLine("</head>");
-                    writer.WriteLine("<body>");
-                    writer.WriteLine($"<h1>{GlobalConstants.REPORT_HTML_TITLE}</h1>");
-                    writer.WriteLine($"<p><strong>Generiert am:</strong> {TimeHelper.GetCurrentDayTimeString()}</p>");
-
-                    GenerateInfoSection(writer, activeTasks, finishedTasks, activeTasksWorkingTime, finishedTasksWorkingTime, focusWorkingTime);
-
-
-
-                    GenerateTableActiveTask(writer, activeTasks, includeComments);
-
+                    WriteHtmlHeader(writer);
+                    WriteProjectOverview(writer, activeTasks, finishedTasks, activeTasksWorkingTime, finishedTasksWorkingTime, focusWorkingTime);
+                    WriteActiveTasksTable(writer, activeTasks, includeComments);
                     if (includeFinishedTasks)
                     {
                         if (!finishedTasks.Any() && verboseLogging)
@@ -73,17 +61,11 @@ namespace DotTimeWork.Commands.Report
                         }
                         else if (finishedTasks.Any())
                         {
-                            GenerateTableFinishedTask(writer, finishedTasks, includeComments);
+                            WriteFinishedTasksTable(writer, finishedTasks, includeComments);
                         }
                     }
-
-                    writer.WriteLine("<h2>Arbeitszeit-Statistik</h2>");
-                    writer.WriteLine("<canvas id=\"workChart\" width=\"400\" height=\"100\"></canvas>");
-                    WriteChartJs(writer, activeTasksWorkingTime, finishedTasksWorkingTime, focusWorkingTime);
-
-                    writer.WriteLine("<hr /><p class=\"footer\">Dot Time Worker tool entwickelt von Carl-Philip Wenz</p>");
-                    writer.WriteLine("</body>");
-                    writer.WriteLine("</html>");
+                    WriteStatisticsSection(writer, activeTasksWorkingTime, finishedTasksWorkingTime, focusWorkingTime);
+                    WriteHtmlFooter(writer);
                 }
                 return true;
             }
@@ -94,7 +76,28 @@ namespace DotTimeWork.Commands.Report
             }
         }
 
-        private void GenerateInfoSection(StreamWriter writer, List<TaskData> activeTasks, List<TaskData> finishedTasks, TimeSpan activeWorking, TimeSpan finishedWorking, int focusWorkingTime)
+        /// <summary>
+        /// Writes the HTML header, including CSS and JS includes.
+        /// </summary>
+        private static void WriteHtmlHeader(StreamWriter writer)
+        {
+            writer.WriteLine("<!DOCTYPE html>");
+            writer.WriteLine("<html>");
+            writer.WriteLine("<head>");
+            writer.WriteLine($"<title>{GlobalConstants.REPORT_HTML_TITLE}</title>");
+            writer.WriteLine("<meta charset=\"utf-8\" />");
+            writer.WriteLine("<style>" + LoadCss() + "</style>");
+            writer.WriteLine("<script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>");
+            writer.WriteLine("</head>");
+            writer.WriteLine("<body>");
+            writer.WriteLine($"<h1>{GlobalConstants.REPORT_HTML_TITLE}</h1>");
+            writer.WriteLine($"<p><strong>Generiert am:</strong> {TimeHelper.GetCurrentDayTimeString()}</p>");
+        }
+
+        /// <summary>
+        /// Writes the project overview section.
+        /// </summary>
+        private void WriteProjectOverview(StreamWriter writer, List<TaskData> activeTasks, List<TaskData> finishedTasks, TimeSpan activeWorking, TimeSpan finishedWorking, int focusWorkingTime)
         {
             TimeSpan totalWorking = activeWorking + finishedWorking;
             int totalTasks = activeTasks.Count + finishedTasks.Count;
@@ -119,7 +122,10 @@ namespace DotTimeWork.Commands.Report
             writer.WriteLine("</ul>");
         }
 
-        private static void GenerateTableActiveTask(StreamWriter writer, List<TaskData> activeTasks, bool includeComments)
+        /// <summary>
+        /// Writes the table of active tasks.
+        /// </summary>
+        private static void WriteActiveTasksTable(StreamWriter writer, List<TaskData> activeTasks, bool includeComments)
         {
             writer.WriteLine("<h2>Aktive Aufgaben</h2>");
             if (!activeTasks.Any())
@@ -139,7 +145,10 @@ namespace DotTimeWork.Commands.Report
             writer.WriteLine("</table>");
         }
 
-        private void GenerateTableFinishedTask(StreamWriter writer, List<TaskData> finishedTasks, bool includeComments)
+        /// <summary>
+        /// Writes the table of finished tasks.
+        /// </summary>
+        private void WriteFinishedTasksTable(StreamWriter writer, List<TaskData> finishedTasks, bool includeComments)
         {
             writer.WriteLine("<h2>Abgeschlossene Aufgaben</h2>");
             if (!finishedTasks.Any())
@@ -156,6 +165,26 @@ namespace DotTimeWork.Commands.Report
                 writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(task.FocusWorkTime)}</td><td>{task.Developer}</td>{commentColumn}</tr>");
             }
             writer.WriteLine("</table>");
+        }
+
+        /// <summary>
+        /// Writes the statistics section and chart.
+        /// </summary>
+        private static void WriteStatisticsSection(StreamWriter writer, TimeSpan activeTasksWorkingTime, TimeSpan finishedTasksWorkingTime, int focusWorkingTime)
+        {
+            writer.WriteLine("<h2>Arbeitszeit-Statistik</h2>");
+            writer.WriteLine("<canvas id=\"workChart\" width=\"400\" height=\"100\"></canvas>");
+            WriteChartJs(writer, activeTasksWorkingTime, finishedTasksWorkingTime, focusWorkingTime);
+        }
+
+        /// <summary>
+        /// Writes the HTML footer.
+        /// </summary>
+        private static void WriteHtmlFooter(StreamWriter writer)
+        {
+            writer.WriteLine("<hr /><p class=\"footer\">Dot Time Worker tool entwickelt von Carl-Philip Wenz</p>");
+            writer.WriteLine("</body>");
+            writer.WriteLine("</html>");
         }
 
         private static string GetComments(TaskData task)
