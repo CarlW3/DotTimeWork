@@ -33,6 +33,7 @@ namespace DotTimeWork.TimeTracker
                 Name = creationData.Name,
                 Started = DateTime.Now,
                 Description = creationData.Description,
+                CreatedBy = currentDeveloper.Name,
             };
             newTask.DeveloperWorkTimes.Add(currentDeveloper.Name, 0); // Initialize with 0 minutes for the current developer
             _developerConfigController.AssignTaskToCurrentDeveloper(newTask.Name);
@@ -80,11 +81,14 @@ namespace DotTimeWork.TimeTracker
             return null;
         }
 
-        public void AddFocusTimeWork(string taskId,int finishedMinutes)
+        public TaskData GetGlobalRunningTaskById(string taskId)
         {
             UpdateTimeTrackingFolder();
-            _taskTimeTrackerDataProvider.AddFocusTimeForTask(taskId, finishedMinutes);
+            TaskData? foundRunning = _taskTimeTrackerDataProvider.GetGlobalRunningTaskById(taskId);
+            return foundRunning;
         }
+
+
         public void AddFocusTimeWork(string taskId, int finishedMinutes, string developer)
         {
             UpdateTimeTrackingFolder();

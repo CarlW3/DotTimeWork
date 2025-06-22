@@ -148,6 +148,12 @@ namespace DotTimeWork.DataProvider
             return RunningTasks.TryGetValue(taskIdNormalized, out TaskData? taskData) ? taskData : null;
         }
 
+        public TaskData? GetGlobalRunningTaskById(string taskId)
+        {
+            string taskIdNormalized = NormalizeTaskId(taskId);
+            return GetAllRunningTasksForAllDevelopers().FirstOrDefault(x=>x.Name.Equals(taskIdNormalized,StringComparison.InvariantCultureIgnoreCase));
+        }
+
         public TaskData? GetFinishedTaskById(string taskId)
         {
             string taskIdNormalized = NormalizeTaskId(taskId);
@@ -166,6 +172,19 @@ namespace DotTimeWork.DataProvider
             SaveFinishedTasks();
         }
 
+        private void SaveRunningTasks()
+        {
+            if (_runningTasks != null)
+            {
+                string jsonStartTask = JsonSerializer.Serialize(_runningTasks, _jsonOptions);
+                File.WriteAllText(GetDateFilePath(GetCurrentDeveloperFileName(true)), jsonStartTask);
+                if (PublicOptions.IsVerbosLogging)
+                {
+                    _inputAndOutputService.PrintDebug($"Running tasks saved to {GetDateFilePath(GetCurrentDeveloperFileName(true))}.");
+                }
+            }
+        }
+
         private void SaveFinishedTasks()
         {
             if (_finishedTasks != null)
@@ -179,16 +198,37 @@ namespace DotTimeWork.DataProvider
             }
         }
 
-        private void SaveRunningTasks()
+
+        // Overload for running tasks (for backward compatibility)
+        // private void SaveRunningTaskForDeveloper(TaskData task)
+        // {
+        //     // Old version removed to avoid ambiguity
+        // }
+
+        // New overload: Save a single task to the correct developer's file
+        private void SaveRunningTaskForDeveloper(TaskData task)
         {
-            if (_runningTasks != null)
+            if (task == null || string.IsNullOrWhiteSpace(task.CreatedBy)) return;
+            string dev = task.CreatedBy.Replace(" ", "_").ToLowerInvariant();
+            string fileName = string.Format(StartTaskDataFileNamePattern, dev);
+            string filePath = GetDateFilePath(fileName);
+            Dictionary<string, TaskData> tasksForDev;
+            if (File.Exists(filePath))
             {
-                string jsonStartTask = JsonSerializer.Serialize(_runningTasks, _jsonOptions);
-                File.WriteAllText(GetDateFilePath(GetCurrentDeveloperFileName(true)), jsonStartTask);
-                if (PublicOptions.IsVerbosLogging)
-                {
-                    _inputAndOutputService.PrintDebug($"Running tasks saved to {GetDateFilePath(GetCurrentDeveloperFileName(true))}.");
-                }
+                string json = File.ReadAllText(filePath);
+                tasksForDev = JsonSerializer.Deserialize<Dictionary<string, TaskData>>(json, _jsonOptions) ?? new Dictionary<string, TaskData>();
+            }
+            else
+            {
+                tasksForDev = new Dictionary<string, TaskData>();
+            }
+            string taskIdNormalized = NormalizeTaskId(task.Name);
+            tasksForDev[taskIdNormalized] = task;
+            string jsonOut = JsonSerializer.Serialize(tasksForDev, _jsonOptions);
+            File.WriteAllText(filePath, jsonOut);
+            if (PublicOptions.IsVerbosLogging)
+            {
+                _inputAndOutputService.PrintDebug($"Task '{task.Name}' saved to {filePath}.");
             }
         }
 
@@ -223,23 +263,14 @@ namespace DotTimeWork.DataProvider
 
         public void AddFocusTimeForTask(string taskId, int finishedMinutes, string developer)
         {
-            TaskData? taskData = GetRunningTaskById(taskId);
+            TaskData? taskData = GetGlobalRunningTaskById(taskId);
             if (taskData == null)
             {
                 Console.WriteLine($"Task {taskId} not found.");
                 return;
             }
             taskData.AddOrUpdateWorkTime(developer, finishedMinutes);
-            SaveRunningTasks();
-        }
-
-        // Keep the old method for backward compatibility, but mark as obsolete or redirect
-        [Obsolete("Use AddFocusTimeForTask(string taskId, int finishedMinutes, string developer) instead.")]
-        public void AddFocusTimeForTask(string taskId, int finishedMinutes)
-        {
-            // Use current developer
-            var dev = _developerConfigController.CurrentDeveloperConfig?.Name ?? "unknown";
-            AddFocusTimeForTask(taskId, finishedMinutes, dev);
+            SaveRunningTaskForDeveloper(taskData);
         }
 
         public void UpdateTask(TaskData selectedTask)

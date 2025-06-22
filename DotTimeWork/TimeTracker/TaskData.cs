@@ -14,6 +14,7 @@ namespace DotTimeWork.TimeTracker
         public string Name { get; set; }
         public string? Description { get; set; }
         public DateTime Started { get; set; }
+        public string CreatedBy { get; set; } = string.Empty;
         /// <summary>
         /// Per-developer working time in minutes
         /// </summary>

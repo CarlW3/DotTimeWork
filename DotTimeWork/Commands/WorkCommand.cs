@@ -1,4 +1,5 @@
 ﻿using DotTimeWork.ConsoleService;
+using DotTimeWork.Developer;
 using DotTimeWork.TimeTracker;
 using Spectre.Console;
 using System.CommandLine;
@@ -8,11 +9,13 @@ namespace DotTimeWork.Commands
     internal class WorkCommand : Command
     {
         private readonly ITaskTimeTracker _taskTimeTracker;
+        private readonly IDeveloperConfigController _developerConfigController;
         private readonly IInputAndOutputService _inputAndOutputService;
-        public WorkCommand(ITaskTimeTracker taskTimeTracker,IInputAndOutputService inputAndOutputService) : base("Work", "Active Time Tracking for a specific Task - Focus Work")
+        public WorkCommand(ITaskTimeTracker taskTimeTracker,IInputAndOutputService inputAndOutputService,IDeveloperConfigController developerConfigController) : base("Work", "Active Time Tracking for a specific Task - Focus Work")
         {
             _taskTimeTracker = taskTimeTracker;
             _inputAndOutputService = inputAndOutputService;
+            _developerConfigController = developerConfigController;
             AddOption(PublicOptions.TaskIdOption);
             this.SetHandler(Execute, PublicOptions.TaskIdOption, PublicOptions.VerboseLogging);
         }
@@ -29,15 +32,11 @@ namespace DotTimeWork.Commands
             {
                 _inputAndOutputService.PrintDebug($"Working on task '{taskId}'.");
             }
-            var selectedTask = _taskTimeTracker.GetTaskById(taskId);
+            var selectedTask = _taskTimeTracker.GetGlobalRunningTaskById(taskId);
             if (selectedTask != null)
             {
                 // Prompt for developer name, default to current
-                string currentDev = System.Environment.UserName;
-                if (selectedTask.DeveloperWorkTimes.Count > 0)
-                {
-                    currentDev = selectedTask.DeveloperWorkTimes.ContainsKey(currentDev) ? currentDev : selectedTask.DeveloperWorkTimes.Keys.First();
-                }
+                string currentDev = _developerConfigController.CurrentDeveloperConfig.Name;
                 string developer = AnsiConsole.Ask<string>("Enter developer name for booking time:", currentDev);
 
                 int howManyMinutes = AnsiConsole.Ask<int>("How many minutes do you want to work on this task? [green](default: 10)[/]", 10);
