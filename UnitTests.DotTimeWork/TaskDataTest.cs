@@ -41,5 +41,39 @@ namespace UnitTests.DotTimeWork
             var task = new TaskData { Name = "TestTask" };
             Assert.Equal(0, task.GetWorkTimeForDeveloper("Charlie"));
         }
+
+        [Fact]
+        public void SetDeveloperStartTime_SetsCorrectly()
+        {
+            var task = new TaskData { Name = "TestTask" };
+            var startTime = new DateTime(2022, 1, 1);
+            task.SetDeveloperStartTime("Alice", startTime);
+            Assert.Equal(startTime, task.GetDeveloperStartTime("Alice"));
+        }
+
+        [Fact]
+        public void GetDeveloperStartTime_ReturnsMinValueIfNotPresent()
+        {
+            var task = new TaskData { Name = "TestTask" };
+            Assert.Equal(DateTime.MinValue, task.GetDeveloperStartTime("NonExistentDev"));
+        }
+
+        [Fact]
+        public void IsDeveloperParticipating_ReturnsTrueForExistingDeveloper()
+        {
+            var task = new TaskData { Name = "TestTask" };
+            task.SetDeveloperStartTime("Alice", DateTime.Now);
+            Assert.True(task.IsDeveloperParticipating("Alice"));
+            Assert.False(task.IsDeveloperParticipating("Bob"));
+        }
+
+        [Fact]
+        public void Started_BackwardCompatibility_ReturnsCreatorStartTime()
+        {
+            var task = new TaskData { Name = "TestTask", CreatedBy = "Alice" };
+            var startTime = new DateTime(2022, 1, 1);
+            task.SetDeveloperStartTime("Alice", startTime);
+            Assert.Equal(startTime, task.Started);
+        }
     }
 }

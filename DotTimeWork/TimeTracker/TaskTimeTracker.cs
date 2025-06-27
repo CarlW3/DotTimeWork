@@ -23,22 +23,50 @@ namespace DotTimeWork.TimeTracker
             UpdateTimeTrackingFolder();
             var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
             TaskData? foundTask = _taskTimeTrackerDataProvider.GetRunningTaskById(creationData.Name);
-            if (foundTask != null)
+            
+            // Current time for this developer's start time
+            DateTime now = DateTime.Now;
+            
+            // Check if the current developer has already started this task
+            bool developerAlreadyStartedTask = foundTask != null && 
+                foundTask.IsDeveloperParticipating(currentDeveloper.Name);
+                
+            if (developerAlreadyStartedTask)
             {
-                Console.WriteLine($"Task {creationData.Name} has already been started.");
+                Console.WriteLine($"You have already started task '{creationData.Name}'.");
                 return;
             }
+            
+            // If the task exists but is started by a different developer, add this developer to it
+            if (foundTask != null)
+            {
+                Console.WriteLine($"Adding you to existing task '{creationData.Name}'.");
+                // Set this developer's start time to now
+                foundTask.SetDeveloperStartTime(currentDeveloper.Name, now);
+                // Use EnsureDeveloperEntry to safely add the developer to DeveloperWorkTimes
+                foundTask.EnsureDeveloperEntry(currentDeveloper.Name);
+                _developerConfigController.AssignTaskToCurrentDeveloper(foundTask.Name);
+                _taskTimeTrackerDataProvider.UpdateTask(foundTask);
+                Console.WriteLine($"You started task '{creationData.Name}' at {now}.");
+                return;
+            }
+            
+            // Otherwise, create a new task
             var newTask = new TaskData
             {
                 Name = creationData.Name,
-                Started = DateTime.Now,
+                Created = now,
                 Description = creationData.Description,
                 CreatedBy = currentDeveloper.Name,
             };
-            newTask.DeveloperWorkTimes.Add(currentDeveloper.Name, 0); // Initialize with 0 minutes for the current developer
+            
+            // Set the start time for the creator
+            newTask.SetDeveloperStartTime(currentDeveloper.Name, now);
+            // Safely initialize work time for the creator using EnsureDeveloperEntry
+            newTask.EnsureDeveloperEntry(currentDeveloper.Name);
             _developerConfigController.AssignTaskToCurrentDeveloper(newTask.Name);
             _taskTimeTrackerDataProvider.AddTask(newTask);
-            Console.WriteLine($"Task {newTask.Name} started at {newTask.Started}.");
+            Console.WriteLine($"Task '{newTask.Name}' started at {now}.");
         }
 
 
@@ -48,7 +76,8 @@ namespace DotTimeWork.TimeTracker
             Guard.AgainstNullOrEmpty(taskId, nameof(taskId));
 
             UpdateTimeTrackingFolder();
-
+            
+            var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
             TaskData? taskToFinish= _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
 
             if (taskToFinish==null)
@@ -57,10 +86,20 @@ namespace DotTimeWork.TimeTracker
                 return TimeSpan.Zero;
             }
             
+            // Check if this developer is participating in the task
+            if (!taskToFinish.IsDeveloperParticipating(currentDeveloper.Name))
+            {
+                Console.WriteLine($"You are not working on task '{taskId}'.");
+                return TimeSpan.Zero;
+            }
+            
+            // Get this developer's start time
+            DateTime developerStartTime = taskToFinish.GetDeveloperStartTime(currentDeveloper.Name);
+            
             _taskTimeTrackerDataProvider.SetTaskAsFinished(taskToFinish);
 
-
-            TimeSpan duration = taskToFinish.Finished - taskToFinish.Started;
+            // Calculate duration based on this developer's start time
+            TimeSpan duration = taskToFinish.Finished - developerStartTime;
             return duration;
         }
 

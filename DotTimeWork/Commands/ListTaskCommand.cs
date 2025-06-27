@@ -35,11 +35,13 @@ namespace DotTimeWork.Commands
                 {
                     foreach (var kvp in task.DeveloperWorkTimes)
                     {
+                        // Get the start time for this specific developer
+                        DateTime developerStartTime = task.GetDeveloperStartTime(kvp.Key);
                         table.AddRow(
                             task.Name,
                             kvp.Key,
-                            task.Started.ToString(),
-                            TimeHelper.GetWorkingTimeHumanReadable((int)((now - task.Started).TotalMinutes)),
+                            developerStartTime.ToString(),
+                            TimeHelper.GetWorkingTimeHumanReadable((int)((now - developerStartTime).TotalMinutes)),
                             TimeHelper.GetWorkingTimeHumanReadable(kvp.Value)
                         );
                     }

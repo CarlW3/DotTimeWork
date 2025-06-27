@@ -210,10 +210,12 @@ namespace UnitTests.DotTimeWork
             var laterTime = DateTime.Now.AddHours(-1);
             
             var task1 = CreateTestTask("TimeTask", "Alice", 30);
-            task1.Started = laterTime;
+            task1.SetDeveloperStartTime("Alice", laterTime);
+            task1.Created = laterTime;
             
             var task2 = CreateTestTask("TimeTask", "Bob", 45);
-            task2.Started = earlierTime;
+            task2.SetDeveloperStartTime("Bob", earlierTime);
+            task2.Created = earlierTime;
             
             SaveTaskToFile("taskStartTimeData.alice.json", new Dictionary<string, TaskData> { { "timetask", task1 } });
             SaveTaskToFile("taskStartTimeData.bob.json", new Dictionary<string, TaskData> { { "timetask", task2 } });
@@ -223,7 +225,11 @@ namespace UnitTests.DotTimeWork
 
             // Assert
             var mergedTask = result["timetask"];
-            Assert.Equal(earlierTime, mergedTask.Started);
+            // Verify each developer's start time is preserved
+            Assert.Equal(laterTime, mergedTask.GetDeveloperStartTime("Alice"));
+            Assert.Equal(earlierTime, mergedTask.GetDeveloperStartTime("Bob"));
+            // Verify Created property uses the earliest time
+            Assert.Equal(earlierTime, mergedTask.Created);
         }
 
         [Fact]
@@ -262,13 +268,17 @@ namespace UnitTests.DotTimeWork
 
         private TaskData CreateTestTask(string name, string developer, int workMinutes)
         {
+            var startTime = DateTime.Now.AddHours(-2);
             var task = new TaskData
             {
                 Name = name,
                 Description = $"Test task {name}",
-                Started = DateTime.Now.AddHours(-2),
+                Created = startTime,
                 CreatedBy = developer
             };
+            
+            // Set developer start time
+            task.SetDeveloperStartTime(developer, startTime);
             
             if (workMinutes > 0)
             {

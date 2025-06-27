@@ -228,13 +228,17 @@ namespace UnitTests.DotTimeWork
 
         private static TaskData CreateTestTask(string name, string developer, int workMinutes)
         {
+            var startTime = DateTime.Now.AddHours(-2);
             var task = new TaskData
             {
                 Name = name,
                 Description = $"Test task {name}",
-                Started = DateTime.Now.AddHours(-2),
+                Created = startTime,
                 CreatedBy = developer
             };
+            
+            // Set developer start time
+            task.SetDeveloperStartTime(developer, startTime);
             
             if (workMinutes > 0)
             {

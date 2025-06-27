@@ -63,8 +63,14 @@ namespace DotTimeWork.Commands
                     commentPanel.BorderStyle = new Style(Color.Green);
                     AnsiConsole.Write(commentPanel);
                 }
-                _inputAndOutputService.PrintMarkup($"[green]Start Time:[/] {selectedTask.Started.ToString()}");
-                _inputAndOutputService.PrintMarkup($"[green]Working Time (Minutes):[/] {TimeHelper.GetWorkingTimeHumanReadable((int)((DateTime.Now - selectedTask.Started).TotalMinutes))}");
+                _inputAndOutputService.PrintMarkup($"[green]Creation Time:[/] {selectedTask.Created.ToString()}");
+                
+                // Show start time for each developer
+                _inputAndOutputService.PrintMarkup($"[green]Developer Start Times:[/]");
+                foreach (var startTime in selectedTask.DeveloperStartTimes)
+                {
+                    _inputAndOutputService.PrintMarkup($"[yellow]{startTime.Key}[/]: {startTime.Value.ToString()} - Working: {TimeHelper.GetWorkingTimeHumanReadable((int)((DateTime.Now - startTime.Value).TotalMinutes))}");
+                }
             }
         }
     }

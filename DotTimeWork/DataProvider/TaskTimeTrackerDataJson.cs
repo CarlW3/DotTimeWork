@@ -158,9 +158,10 @@ namespace DotTimeWork.DataProvider
             {
                 Name = source.Name,
                 Description = source.Description,
-                Started = source.Started,
+                Created = source.Created,
                 Finished = source.Finished,
                 CreatedBy = source.CreatedBy,
+                DeveloperStartTimes = new Dictionary<string, DateTime>(source.DeveloperStartTimes),
                 DeveloperWorkTimes = new Dictionary<string, int>(source.DeveloperWorkTimes),
                 // Only include comments from the current developer
                 Comments = new List<TaskComment>(
@@ -185,9 +186,10 @@ namespace DotTimeWork.DataProvider
             {
                 Name = source.Name,
                 Description = source.Description,
-                Started = source.Started,
+                Created = source.Created, 
                 Finished = source.Finished,
                 CreatedBy = source.CreatedBy,
+                DeveloperStartTimes = new Dictionary<string, DateTime>(source.DeveloperStartTimes),
                 DeveloperWorkTimes = new Dictionary<string, int>(source.DeveloperWorkTimes),
                 Comments = new List<TaskComment>(source.Comments.Select(c => new TaskComment
                 {
@@ -229,10 +231,20 @@ namespace DotTimeWork.DataProvider
                 }
             }
 
-            // Use the earliest start time
-            if (source.Started < target.Started)
+            // Merge developer start times, keeping the earliest time for each developer
+            foreach (var devStartTime in source.DeveloperStartTimes)
             {
-                target.Started = source.Started;
+                if (!target.DeveloperStartTimes.ContainsKey(devStartTime.Key) || 
+                    devStartTime.Value < target.DeveloperStartTimes[devStartTime.Key])
+                {
+                    target.DeveloperStartTimes[devStartTime.Key] = devStartTime.Value;
+                }
+            }
+            
+            // Ensure Created property has the earliest time between the two tasks
+            if (source.Created < target.Created)
+            {
+                target.Created = source.Created;
             }
 
             // Use the latest finish time (if both are finished)
@@ -395,7 +407,7 @@ namespace DotTimeWork.DataProvider
         /// <summary>
         /// Load tasks from a file, return empty dictionary if file doesn't exist or can't be read
         /// </summary>
-        private Dictionary<string, TaskData> LoadTasksFromFile(string filePath)
+        private static Dictionary<string, TaskData> LoadTasksFromFile(string filePath)
         {
             if (!File.Exists(filePath))
                 return new Dictionary<string, TaskData>(StringComparer.OrdinalIgnoreCase);
@@ -415,7 +427,7 @@ namespace DotTimeWork.DataProvider
         /// <summary>
         /// Save tasks to a file
         /// </summary>
-        private void SaveTasksToFile(string filePath, Dictionary<string, TaskData> tasks)
+        private static void SaveTasksToFile(string filePath, Dictionary<string, TaskData> tasks)
         {
             string jsonOut = JsonSerializer.Serialize(tasks, _jsonOptions);
             File.WriteAllText(filePath, jsonOut);

@@ -23,16 +23,8 @@ namespace DotTimeWork.Commands
             TaskType taskType = TaskType.Other;
             if (string.IsNullOrWhiteSpace(taskId))
             {
-                bool taskExists = false;
-                do
-                {
-                    taskId = AnsiConsole.Ask<string>(Properties.Resources.StartTask_CreateTask);
-                    taskExists = TaskExists(taskId);
-                    if (taskExists)
-                    {
-                        Console.WriteLine(string.Format(Properties.Resources.StartTask_CreateTask_Failed, taskId));
-                    }
-                } while (taskExists);
+                // No need to check if task exists - we want to allow multiple developers to start the same task
+                taskId = AnsiConsole.Ask<string>(Properties.Resources.StartTask_CreateTask);
                 description = AnsiConsole.Ask<string>(Properties.Resources.StartTask_CreateTask_SmallDescription);
 
                 // Prompt for TaskType (optional)
@@ -61,11 +53,6 @@ namespace DotTimeWork.Commands
                 Description = description,
                 TaskType = taskType
             });
-        }
-
-        private bool TaskExists(string taskId)
-        {
-            return _taskTimeTracker.GetTaskById(taskId) != null;
         }
     }
 }
