@@ -89,66 +89,60 @@ namespace DotTimeWork.DataProvider
             return Path.Combine(_storagePath, file);
         }
 
-        private Dictionary<string, TaskData> LoadTaskData(string file)
-        {
-            try
-            {
-                if (!File.Exists(GetDateFilePath(file)))
-                {
-                    return new Dictionary<string, TaskData>();
-                }
-                string json = File.ReadAllText(GetDateFilePath(file));
-                var dict = JsonSerializer.Deserialize<Dictionary<string, TaskData>>(json, _jsonOptions);
-                return dict ?? new Dictionary<string, TaskData>();
-            }
-            catch
-            {
-                return new Dictionary<string, TaskData>();
-            }
-        }
 
         /// <summary>
         /// Load and aggregate task data from all developers
         /// </summary>
         private Dictionary<string, TaskData> LoadAggregatedTaskData(bool running)
         {
-            var aggregatedTasks = new Dictionary<string, TaskData>();
+            var aggregatedTasks = new Dictionary<string, TaskData>(StringComparer.OrdinalIgnoreCase);
             
             if (string.IsNullOrEmpty(_storagePath) || !Directory.Exists(_storagePath))
                 return aggregatedTasks;
 
             var pattern = running ? "taskStartTimeData.*.json" : "taskFinishedTimeData.*.json";
+            var files = Directory.GetFiles(_storagePath, pattern);
             
-            foreach (var file in Directory.GetFiles(_storagePath, pattern))
+            if (files.Length == 0)
+                return aggregatedTasks;
+
+            foreach (var file in files)
             {
                 try
                 {
+                    var fileInfo = new FileInfo(file);
+                    if (fileInfo.Length == 0) continue; // Skip empty files
+                    
                     string json = File.ReadAllText(file);
+                    if (string.IsNullOrWhiteSpace(json)) continue;
+                    
                     var dict = JsonSerializer.Deserialize<Dictionary<string, TaskData>>(json, _jsonOptions);
-                    if (dict != null)
+                    if (dict?.Count > 0)
                     {
-                        foreach (var kvp in dict)
+                        foreach (var (key, taskFromFile) in dict)
                         {
-                            string normalizedTaskId = NormalizeTaskId(kvp.Key);
-                            TaskData taskFromFile = kvp.Value;
+                            string normalizedTaskId = NormalizeTaskId(key);
                             
-                            if (aggregatedTasks.ContainsKey(normalizedTaskId))
+                            if (aggregatedTasks.TryGetValue(normalizedTaskId, out TaskData? existingTask))
                             {
                                 // Merge with existing task
-                                TaskData existingTask = aggregatedTasks[normalizedTaskId];
                                 MergeTaskData(existingTask, taskFromFile);
                             }
                             else
                             {
-                                // Add new task
-                                aggregatedTasks[normalizedTaskId] = taskFromFile;
+                                // Add new task (clone to avoid reference issues)
+                                aggregatedTasks[normalizedTaskId] = CloneTaskData(taskFromFile);
                             }
                         }
                     }
                 }
+                catch (Exception ex) when (PublicOptions.IsVerbosLogging)
+                {
+                    _inputAndOutputService.PrintDebug($"Error reading file {file}: {ex.Message}");
+                }
                 catch
                 {
-                    // Ignore files that can't be read
+                    // Silently ignore files that can't be read in non-verbose mode
                 }
             }
             
@@ -156,27 +150,56 @@ namespace DotTimeWork.DataProvider
         }
 
         /// <summary>
+        /// Create a deep copy of TaskData to avoid reference issues during aggregation
+        /// </summary>
+        private static TaskData CloneTaskData(TaskData source)
+        {
+            return new TaskData
+            {
+                Name = source.Name,
+                Description = source.Description,
+                Started = source.Started,
+                Finished = source.Finished,
+                CreatedBy = source.CreatedBy,
+                DeveloperWorkTimes = new Dictionary<string, int>(source.DeveloperWorkTimes),
+                Comments = new List<TaskComment>(source.Comments.Select(c => new TaskComment
+                {
+                    Created = c.Created,
+                    Developer = c.Developer,
+                    Comment = c.Comment
+                }))
+            };
+        }
+
+        /// <summary>
         /// Merge task data from different developers working on the same task
         /// </summary>
-        private void MergeTaskData(TaskData target, TaskData source)
+        private static void MergeTaskData(TaskData target, TaskData source)
         {
             // Merge developer work times
-            foreach (var developerTime in source.DeveloperWorkTimes)
+            foreach (var (developer, minutes) in source.DeveloperWorkTimes)
             {
-                if (target.DeveloperWorkTimes.ContainsKey(developerTime.Key))
-                {
-                    target.DeveloperWorkTimes[developerTime.Key] += developerTime.Value;
-                }
-                else
-                {
-                    target.DeveloperWorkTimes[developerTime.Key] = developerTime.Value;
-                }
+                target.DeveloperWorkTimes[developer] = target.DeveloperWorkTimes.GetValueOrDefault(developer, 0) + minutes;
             }
 
-            // Merge comments
+            // Merge comments (avoid duplicates by checking timestamp and developer)
+            var existingCommentKeys = new HashSet<string>(
+                target.Comments.Select(c => $"{c.Created:yyyy-MM-dd HH:mm:ss}_{c.Developer}_{c.Comment}")
+            );
+            
             foreach (var comment in source.Comments)
             {
-                target.Comments.Add(comment);
+                string commentKey = $"{comment.Created:yyyy-MM-dd HH:mm:ss}_{comment.Developer}_{comment.Comment}";
+                if (!existingCommentKeys.Contains(commentKey))
+                {
+                    target.Comments.Add(new TaskComment
+                    {
+                        Created = comment.Created,
+                        Developer = comment.Developer,
+                        Comment = comment.Comment
+                    });
+                    existingCommentKeys.Add(commentKey);
+                }
             }
 
             // Use the earliest start time
@@ -202,6 +225,12 @@ namespace DotTimeWork.DataProvider
             if (string.IsNullOrEmpty(target.Description) && !string.IsNullOrEmpty(source.Description))
             {
                 target.Description = source.Description;
+            }
+
+            // Ensure the created by field reflects the earliest creator
+            if (string.IsNullOrEmpty(target.CreatedBy) && !string.IsNullOrEmpty(source.CreatedBy))
+            {
+                target.CreatedBy = source.CreatedBy;
             }
         }
 
@@ -291,25 +320,14 @@ namespace DotTimeWork.DataProvider
             string fileName = isRunning ? GetCurrentDeveloperFileName(true) : GetCurrentDeveloperFileName(false);
             string filePath = GetDateFilePath(fileName);
             
-            Dictionary<string, TaskData> tasksForCurrentDev;
-            if (File.Exists(filePath))
-            {
-                string json = File.ReadAllText(filePath);
-                tasksForCurrentDev = JsonSerializer.Deserialize<Dictionary<string, TaskData>>(json, _jsonOptions) ?? new Dictionary<string, TaskData>();
-            }
-            else
-            {
-                tasksForCurrentDev = new Dictionary<string, TaskData>();
-            }
-            
+            var tasksForCurrentDev = LoadTasksFromFile(filePath);
             string taskIdNormalized = NormalizeTaskId(task.Name);
             
             // Ensure current developer has entry in the task's work times
             task.EnsureDeveloperEntry(currentDev);
             
             tasksForCurrentDev[taskIdNormalized] = task;
-            string jsonOut = JsonSerializer.Serialize(tasksForCurrentDev, _jsonOptions);
-            File.WriteAllText(filePath, jsonOut);
+            SaveTasksToFile(filePath, tasksForCurrentDev);
             
             if (PublicOptions.IsVerbosLogging)
             {
@@ -329,23 +347,47 @@ namespace DotTimeWork.DataProvider
             
             if (!File.Exists(filePath)) return;
             
-            Dictionary<string, TaskData> tasksForCurrentDev;
-            string json = File.ReadAllText(filePath);
-            tasksForCurrentDev = JsonSerializer.Deserialize<Dictionary<string, TaskData>>(json, _jsonOptions) ?? new Dictionary<string, TaskData>();
-            
+            var tasksForCurrentDev = LoadTasksFromFile(filePath);
             string taskIdNormalized = NormalizeTaskId(task.Name);
             
-            if (tasksForCurrentDev.ContainsKey(taskIdNormalized))
+            if (tasksForCurrentDev.Remove(taskIdNormalized))
             {
-                tasksForCurrentDev.Remove(taskIdNormalized);
-                string jsonOut = JsonSerializer.Serialize(tasksForCurrentDev, _jsonOptions);
-                File.WriteAllText(filePath, jsonOut);
+                SaveTasksToFile(filePath, tasksForCurrentDev);
                 
                 if (PublicOptions.IsVerbosLogging)
                 {
                     _inputAndOutputService.PrintDebug($"Task '{task.Name}' removed from current developer's {(isRunning ? "running" : "finished")} file: {filePath}.");
                 }
             }
+        }
+
+        /// <summary>
+        /// Load tasks from a file, return empty dictionary if file doesn't exist or can't be read
+        /// </summary>
+        private Dictionary<string, TaskData> LoadTasksFromFile(string filePath)
+        {
+            if (!File.Exists(filePath))
+                return new Dictionary<string, TaskData>(StringComparer.OrdinalIgnoreCase);
+
+            try
+            {
+                string json = File.ReadAllText(filePath);
+                return JsonSerializer.Deserialize<Dictionary<string, TaskData>>(json, _jsonOptions) 
+                       ?? new Dictionary<string, TaskData>(StringComparer.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return new Dictionary<string, TaskData>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        /// <summary>
+        /// Save tasks to a file
+        /// </summary>
+        private void SaveTasksToFile(string filePath, Dictionary<string, TaskData> tasks)
+        {
+            string jsonOut = JsonSerializer.Serialize(tasks, _jsonOptions);
+            File.WriteAllText(filePath, jsonOut);
         }
 
         // --- New methods for all-developer aggregation ---
