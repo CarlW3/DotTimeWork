@@ -150,6 +150,33 @@ namespace DotTimeWork.DataProvider
         }
 
         /// <summary>
+        /// Create a copy of TaskData with only comments from the specified developer
+        /// </summary>
+        private static TaskData CloneTaskForCurrentDeveloper(TaskData source, string currentDeveloper)
+        {
+            return new TaskData
+            {
+                Name = source.Name,
+                Description = source.Description,
+                Started = source.Started,
+                Finished = source.Finished,
+                CreatedBy = source.CreatedBy,
+                DeveloperWorkTimes = new Dictionary<string, int>(source.DeveloperWorkTimes),
+                // Only include comments from the current developer
+                Comments = new List<TaskComment>(
+                    source.Comments
+                        .Where(c => c.Developer.Equals(currentDeveloper, StringComparison.OrdinalIgnoreCase))
+                        .Select(c => new TaskComment
+                        {
+                            Created = c.Created,
+                            Developer = c.Developer,
+                            Comment = c.Comment
+                        })
+                )
+            };
+        }
+
+        /// <summary>
         /// Create a deep copy of TaskData to avoid reference issues during aggregation
         /// </summary>
         private static TaskData CloneTaskData(TaskData source)
@@ -311,6 +338,7 @@ namespace DotTimeWork.DataProvider
 
         /// <summary>
         /// Save a task to the current developer's file (running or finished)
+        /// Only saves comments from the current developer
         /// </summary>
         private void SaveTaskToCurrentDeveloper(TaskData task, bool isRunning)
         {
@@ -323,10 +351,13 @@ namespace DotTimeWork.DataProvider
             var tasksForCurrentDev = LoadTasksFromFile(filePath);
             string taskIdNormalized = NormalizeTaskId(task.Name);
             
-            // Ensure current developer has entry in the task's work times
-            task.EnsureDeveloperEntry(currentDev);
+            // Create a copy of the task with only current developer's comments
+            var taskForCurrentDev = CloneTaskForCurrentDeveloper(task, currentDev);
             
-            tasksForCurrentDev[taskIdNormalized] = task;
+            // Ensure current developer has entry in the task's work times
+            taskForCurrentDev.EnsureDeveloperEntry(currentDev);
+            
+            tasksForCurrentDev[taskIdNormalized] = taskForCurrentDev;
             SaveTasksToFile(filePath, tasksForCurrentDev);
             
             if (PublicOptions.IsVerbosLogging)
