@@ -37,6 +37,16 @@ namespace DotTimeWork.Commands
                     {
                         // Get the start time for this specific developer
                         DateTime developerStartTime = task.GetDeveloperStartTime(kvp.Key);
+                        
+                        // If start time is not set (MinValue), fallback to task creation time
+                        if (developerStartTime == DateTime.MinValue)
+                        {
+                            developerStartTime = task.Created;
+                            // Update the start time in the task to fix the data
+                            task.SetDeveloperStartTime(kvp.Key, developerStartTime);
+                            _taskTimeTracker.UpdateTask(task);
+                        }
+                        
                         table.AddRow(
                             task.Name,
                             kvp.Key,

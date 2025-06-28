@@ -24,10 +24,15 @@ namespace DotTimeWork.Commands
         private void ExecuteAllTasks(bool verboseLogging)
         {
             PublicOptions.IsVerbosLogging = verboseLogging;
-            var runningTasks = _taskTimeTracker.GetAllRunningTasks();
+            // Get all running tasks
+            var runningTasks = _taskTimeTracker.GetAllRunningTasks()
+                // Filter to only include tasks assigned to current developer
+                .Where(task => _taskTimeTracker.IsTaskAssignedToCurrentDeveloper(task.Name))
+                .ToList();
+                
             if (runningTasks.Count == 0)
             {
-                _inputAndOutputService.PrintNormal("No running tasks found.");
+                _inputAndOutputService.PrintNormal("No running tasks found for your account.");
                 return;
             }
             if (verboseLogging)
@@ -52,8 +57,19 @@ namespace DotTimeWork.Commands
             PublicOptions.IsVerbosLogging = verboseLogging;
             if (string.IsNullOrEmpty(taskId))
             {
-                var availableTasks = _taskTimeTracker.GetAllRunningTasks().Select(x => x.Name).ToArray();
-                taskId = _inputAndOutputService.ShowTaskSelection(availableTasks, "Select [green]Task[/] to finish?");
+                // Only show tasks for the current developer
+                var currentDeveloperTasks = _taskTimeTracker.GetAllRunningTasks()
+                    .Where(x => _taskTimeTracker.IsTaskAssignedToCurrentDeveloper(x.Name))
+                    .Select(x => x.Name)
+                    .ToArray();
+                
+                if (currentDeveloperTasks.Length == 0)
+                {
+                    _inputAndOutputService.PrintNormal("You have no running tasks.");
+                    return;
+                }
+                
+                taskId = _inputAndOutputService.ShowTaskSelection(currentDeveloperTasks, "Select [green]Task[/] to finish?");
             }
             else
             {

@@ -41,10 +41,20 @@ namespace DotTimeWork.TimeTracker
             if (foundTask != null)
             {
                 Console.WriteLine($"Adding you to existing task '{creationData.Name}'.");
-                // Set this developer's start time to now
+                // Set this developer's start time to now - ensure this is set BEFORE EnsureDeveloperEntry
                 foundTask.SetDeveloperStartTime(currentDeveloper.Name, now);
                 // Use EnsureDeveloperEntry to safely add the developer to DeveloperWorkTimes
                 foundTask.EnsureDeveloperEntry(currentDeveloper.Name);
+                
+                // Double check that start time is properly set
+                if (foundTask.GetDeveloperStartTime(currentDeveloper.Name) == DateTime.MinValue)
+                {
+                    foundTask.SetDeveloperStartTime(currentDeveloper.Name, now);
+                }
+                
+                // Add this developer to the active developers list
+                foundTask.ActiveDevelopers.Add(currentDeveloper.Name);
+                
                 _developerConfigController.AssignTaskToCurrentDeveloper(foundTask.Name);
                 _taskTimeTrackerDataProvider.UpdateTask(foundTask);
                 Console.WriteLine($"You started task '{creationData.Name}' at {now}.");
@@ -64,6 +74,9 @@ namespace DotTimeWork.TimeTracker
             newTask.SetDeveloperStartTime(currentDeveloper.Name, now);
             // Safely initialize work time for the creator using EnsureDeveloperEntry
             newTask.EnsureDeveloperEntry(currentDeveloper.Name);
+            // Add current developer to active developers list
+            newTask.ActiveDevelopers.Add(currentDeveloper.Name);
+            
             _developerConfigController.AssignTaskToCurrentDeveloper(newTask.Name);
             _taskTimeTrackerDataProvider.AddTask(newTask);
             Console.WriteLine($"Task '{newTask.Name}' started at {now}.");
@@ -103,7 +116,7 @@ namespace DotTimeWork.TimeTracker
             return duration;
         }
 
-        public TaskData GetTaskById(string taskId)
+        public TaskData? GetTaskById(string taskId)
         {
             UpdateTimeTrackingFolder();
             TaskData? foundRunning = _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
@@ -120,7 +133,7 @@ namespace DotTimeWork.TimeTracker
             return null;
         }
 
-        public TaskData GetGlobalRunningTaskById(string taskId)
+        public TaskData? GetGlobalRunningTaskById(string taskId)
         {
             UpdateTimeTrackingFolder();
             TaskData? foundRunning = _taskTimeTrackerDataProvider.GetGlobalRunningTaskById(taskId);
@@ -146,6 +159,23 @@ namespace DotTimeWork.TimeTracker
             return _taskTimeTrackerDataProvider.GetAllFinishedTasksForAllDevelopers();
         }
 
+        public void UpdateTask(TaskData selectedTask)
+        {
+            _taskTimeTrackerDataProvider.UpdateTask(selectedTask);
+        }
+
+        public bool IsTaskAssignedToCurrentDeveloper(string taskId)
+        {
+            Guard.AgainstNullOrEmpty(taskId, nameof(taskId));
+            
+            UpdateTimeTrackingFolder();
+            var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
+            TaskData? task = _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
+            
+            // Check if task exists and if the current developer is participating in it
+            return task != null && task.IsDeveloperParticipating(currentDeveloper.Name);
+        }
+
         private void UpdateTimeTrackingFolder()
         {
             ProjectConfig foundProject= _projectConfigController.GetCurrentProjectConfig();
@@ -161,11 +191,6 @@ namespace DotTimeWork.TimeTracker
                 return;
             }
             _taskTimeTrackerDataProvider.SetStoragePath(timeTrackingFolder);
-        }
-
-        public void UpdateTask(TaskData selectedTask)
-        {
-            _taskTimeTrackerDataProvider.UpdateTask(selectedTask);
         }
     }
 }

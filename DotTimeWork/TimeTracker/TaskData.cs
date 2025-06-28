@@ -42,6 +42,17 @@ namespace DotTimeWork.TimeTracker
         /// Will be set when Task Finished is called
         /// </summary>
         public DateTime Finished { get; set; }
+        
+        /// <summary>
+        /// The developer who marked this task as finished
+        /// </summary>
+        public string FinishedBy { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Set of developers who are currently working on this task
+        /// </summary>
+        public HashSet<string> ActiveDevelopers { get; set; } = new HashSet<string>();
+
         public List<TaskComment> Comments { get; set; } = new List<TaskComment>();
 
         /// <summary>

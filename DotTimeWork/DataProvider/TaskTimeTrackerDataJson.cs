@@ -160,9 +160,12 @@ namespace DotTimeWork.DataProvider
                 Description = source.Description,
                 Created = source.Created,
                 Finished = source.Finished,
+                FinishedBy = source.FinishedBy, // Include who finished the task
                 CreatedBy = source.CreatedBy,
                 DeveloperStartTimes = new Dictionary<string, DateTime>(source.DeveloperStartTimes),
                 DeveloperWorkTimes = new Dictionary<string, int>(source.DeveloperWorkTimes),
+                // Copy active developers list
+                ActiveDevelopers = new HashSet<string>(source.ActiveDevelopers ?? new HashSet<string>()),
                 // Only include comments from the current developer
                 Comments = new List<TaskComment>(
                     source.Comments
@@ -188,9 +191,12 @@ namespace DotTimeWork.DataProvider
                 Description = source.Description,
                 Created = source.Created, 
                 Finished = source.Finished,
+                FinishedBy = source.FinishedBy, // Include who finished the task
                 CreatedBy = source.CreatedBy,
                 DeveloperStartTimes = new Dictionary<string, DateTime>(source.DeveloperStartTimes),
                 DeveloperWorkTimes = new Dictionary<string, int>(source.DeveloperWorkTimes),
+                // Copy active developers list
+                ActiveDevelopers = new HashSet<string>(source.ActiveDevelopers ?? new HashSet<string>()),
                 Comments = new List<TaskComment>(source.Comments.Select(c => new TaskComment
                 {
                     Created = c.Created,
@@ -241,6 +247,22 @@ namespace DotTimeWork.DataProvider
                 }
             }
             
+            // Merge active developers list
+            if (source.ActiveDevelopers != null)
+            {
+                if (target.ActiveDevelopers == null)
+                {
+                    target.ActiveDevelopers = new HashSet<string>(source.ActiveDevelopers);
+                }
+                else
+                {
+                    foreach (var dev in source.ActiveDevelopers)
+                    {
+                        target.ActiveDevelopers.Add(dev);
+                    }
+                }
+            }
+            
             // Ensure Created property has the earliest time between the two tasks
             if (source.Created < target.Created)
             {
@@ -253,11 +275,17 @@ namespace DotTimeWork.DataProvider
                 if (source.Finished > target.Finished)
                 {
                     target.Finished = source.Finished;
+                    // If finish time is updated, update the developer who finished it
+                    if (!string.IsNullOrEmpty(source.FinishedBy))
+                    {
+                        target.FinishedBy = source.FinishedBy;
+                    }
                 }
             }
             else if (source.Finished != default && target.Finished == default)
             {
                 target.Finished = source.Finished;
+                target.FinishedBy = source.FinishedBy;
             }
 
             // Update description if source has one and target doesn't
@@ -310,7 +338,17 @@ namespace DotTimeWork.DataProvider
                 _inputAndOutputService.PrintWarning("ERROR: Task Instance not known - not from the system.");
                 throw new InvalidOperationException("Task instance not known - not from the system.");
             }
+            
+            // Set finish time and developer who finished it
             task.Finished = DateTime.Now;
+            string currentDeveloper = _developerConfigController.CurrentDeveloperConfig?.Name ?? "unknown";
+            task.FinishedBy = currentDeveloper;
+            
+            // Remove current developer from active developers list
+            if (task.ActiveDevelopers.Contains(currentDeveloper))
+            {
+                task.ActiveDevelopers.Remove(currentDeveloper);
+            }
             
             // Save finished task to current developer's file
             SaveTaskToCurrentDeveloper(task, false);
