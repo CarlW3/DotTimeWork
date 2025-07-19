@@ -37,7 +37,14 @@ namespace DotTimeWork.Commands
             if (selectedTask != null)
             {
                 _inputAndOutputService.PrintMarkup($"[green]{Properties.Resources.List_Column_TaskName}:[/] {selectedTask.Name}");
-                _inputAndOutputService.PrintMarkup($"[green]{Properties.Resources.List_Column_Developer}:[/] {selectedTask.Developer}");
+                // Show all developers and their times
+                if (selectedTask.DeveloperWorkTimes.Count > 0)
+                {
+                    var devLines = selectedTask.DeveloperWorkTimes.Select(kvp => $"[yellow]{kvp.Key}[/]: {TimeHelper.GetWorkingTimeHumanReadable(kvp.Value)}");
+                    _inputAndOutputService.PrintMarkup("[green]Developer(s) & Focus Time:[/]");
+                    foreach (var line in devLines)
+                        _inputAndOutputService.PrintMarkup(line);
+                }
                 if(!string.IsNullOrWhiteSpace(selectedTask.Description))
                 {
                     _inputAndOutputService.PrintMarkup($"[green]Description:[/] {selectedTask.Description}");
@@ -56,9 +63,14 @@ namespace DotTimeWork.Commands
                     commentPanel.BorderStyle = new Style(Color.Green);
                     AnsiConsole.Write(commentPanel);
                 }
-                _inputAndOutputService.PrintMarkup($"[green]Start Time:[/] {selectedTask.Started.ToString()}");
-                _inputAndOutputService.PrintMarkup($"[green]Working Time (Minutes):[/] {TimeHelper.GetWorkingTimeHumanReadable((int)((DateTime.Now - selectedTask.Started).TotalMinutes))}");
-                _inputAndOutputService.PrintMarkup($"[green]Focus Working Time (Minutes):[/] {TimeHelper.GetWorkingTimeHumanReadable(selectedTask.FocusWorkTime)}");
+                _inputAndOutputService.PrintMarkup($"[green]Creation Time:[/] {selectedTask.Created.ToString()}");
+                
+                // Show start time for each developer
+                _inputAndOutputService.PrintMarkup($"[green]Developer Start Times:[/]");
+                foreach (var startTime in selectedTask.DeveloperStartTimes)
+                {
+                    _inputAndOutputService.PrintMarkup($"[yellow]{startTime.Key}[/]: {startTime.Value.ToString()} - Working: {TimeHelper.GetWorkingTimeHumanReadable((int)((DateTime.Now - startTime.Value).TotalMinutes))}");
+                }
             }
         }
     }

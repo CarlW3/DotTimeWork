@@ -35,14 +35,20 @@ namespace DotTimeWork.Commands.Report
         {
             DateTime dateTime = DateTime.Now;
             // Aufgaben in die Tabelle einfügen
-            writer.WriteLine("State"+SEPARATOR+"Name"+SEPARATOR+"Started"+SEPARATOR+"Ended"+SEPARATOR+"Working Time"+SEPARATOR+"Focus Working"+SEPARATOR+"Developer");
+            writer.WriteLine("State"+SEPARATOR+"Name"+SEPARATOR+"Started"+SEPARATOR+"Ended"+SEPARATOR+"Working Time"+SEPARATOR+"Developer"+SEPARATOR+"Focus Working (Minutes)");
             foreach (var task in _taskTimeTracker.GetAllRunningTasks())
             {
-                writer.WriteLine("Active"+SEPARATOR+task.Name+SEPARATOR+task.Started+SEPARATOR+"N/A"+SEPARATOR + TimeHelper.GetWorkingTimeHumanReadable(dateTime - task.Started)+SEPARATOR+task.FocusWorkTime+SEPARATOR+task.Developer);
+                foreach (var kvp in task.DeveloperWorkTimes)
+                {
+                    writer.WriteLine("Active"+SEPARATOR+task.Name+SEPARATOR+task.Started+SEPARATOR+"N/A"+SEPARATOR + TimeHelper.GetWorkingTimeHumanReadable(dateTime - task.Started)+SEPARATOR+kvp.Key+SEPARATOR+kvp.Value);
+                }
             }
             foreach (var task in _taskTimeTracker.GetAllFinishedTasks())
             {
-                writer.WriteLine("Done" + SEPARATOR + task.Name + SEPARATOR + task.Started + SEPARATOR + task.Finished + SEPARATOR + TimeHelper.GetWorkingTimeHumanReadable(task.Finished - task.Started) + SEPARATOR + task.FocusWorkTime + SEPARATOR + task.Developer);
+                foreach (var kvp in task.DeveloperWorkTimes)
+                {
+                    writer.WriteLine("Done" + SEPARATOR + task.Name + SEPARATOR + task.Started + SEPARATOR + task.Finished + SEPARATOR + TimeHelper.GetWorkingTimeHumanReadable(task.Finished - task.Started) + SEPARATOR + kvp.Key + SEPARATOR + kvp.Value);
+                }
             }
         }
     }

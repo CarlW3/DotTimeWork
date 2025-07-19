@@ -29,9 +29,9 @@ namespace DotTimeWork.Services
                 var combinedTasks = _runningTasks.Concat(_finishedTasks);
 
                 int totalMinutes = 0;
-                foreach (var task in combinedTasks)
+                foreach (var task in combinedTasks.SelectMany(t => t.DeveloperWorkTimes))
                 {
-                    totalMinutes += task.FocusWorkTime;
+                    totalMinutes += task.Value;
                 }
                 return totalMinutes;
             }
@@ -47,7 +47,11 @@ namespace DotTimeWork.Services
             TimeSpan totalTime = TimeSpan.Zero;
             foreach (var task in _finishedTasks)
             {
-                totalTime += (task.Finished - task.Started);
+                // Calculate for each developer separately
+                foreach (var startTime in task.DeveloperStartTimes)
+                {
+                    totalTime += (task.Finished - startTime.Value);
+                }
             }
             return totalTime;
         }
@@ -60,9 +64,14 @@ namespace DotTimeWork.Services
             }
 
             TimeSpan totalTime = TimeSpan.Zero;
+            DateTime now = DateTime.Now;
             foreach (var task in _runningTasks)
             {
-                totalTime += (DateTime.Now - task.Started);
+                // Calculate for each developer separately
+                foreach (var startTime in task.DeveloperStartTimes)
+                {
+                    totalTime += (now - startTime.Value);
+                }
             }
             return totalTime;
         }
@@ -70,7 +79,8 @@ namespace DotTimeWork.Services
         public TimeSpan GetWorkingSpanTime()
         {
             var combined = _runningTasks.Concat(_finishedTasks);
-            var earliestStart = combined.Min(task => task.Started);
+            // Get the earliest start time across all developers
+            var earliestStart = combined.SelectMany(t => t.DeveloperStartTimes.Values).Min();
             var latestEnd = combined.Max(task => task.Finished);
             if (latestEnd == DateTime.MinValue)
             {

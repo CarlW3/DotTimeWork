@@ -23,21 +23,63 @@ namespace DotTimeWork.TimeTracker
             UpdateTimeTrackingFolder();
             var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
             TaskData? foundTask = _taskTimeTrackerDataProvider.GetRunningTaskById(creationData.Name);
-            if (foundTask != null)
+            
+            // Current time for this developer's start time
+            DateTime now = DateTime.Now;
+            
+            // Check if the current developer has already started this task
+            bool developerAlreadyStartedTask = foundTask != null && 
+                foundTask.IsDeveloperParticipating(currentDeveloper.Name);
+                
+            if (developerAlreadyStartedTask)
             {
-                Console.WriteLine($"Task {creationData.Name} has already been started.");
+                Console.WriteLine($"You have already started task '{creationData.Name}'.");
                 return;
             }
+            
+            // If the task exists but is started by a different developer, add this developer to it
+            if (foundTask != null)
+            {
+                Console.WriteLine($"Adding you to existing task '{creationData.Name}'.");
+                // Set this developer's start time to now - ensure this is set BEFORE EnsureDeveloperEntry
+                foundTask.SetDeveloperStartTime(currentDeveloper.Name, now);
+                // Use EnsureDeveloperEntry to safely add the developer to DeveloperWorkTimes
+                foundTask.EnsureDeveloperEntry(currentDeveloper.Name);
+                
+                // Double check that start time is properly set
+                if (foundTask.GetDeveloperStartTime(currentDeveloper.Name) == DateTime.MinValue)
+                {
+                    foundTask.SetDeveloperStartTime(currentDeveloper.Name, now);
+                }
+                
+                // Add this developer to the active developers list
+                foundTask.ActiveDevelopers.Add(currentDeveloper.Name);
+                
+                _developerConfigController.AssignTaskToCurrentDeveloper(foundTask.Name);
+                _taskTimeTrackerDataProvider.UpdateTask(foundTask);
+                Console.WriteLine($"You started task '{creationData.Name}' at {now}.");
+                return;
+            }
+            
+            // Otherwise, create a new task
             var newTask = new TaskData
             {
                 Name = creationData.Name,
-                Started = DateTime.Now,
+                Created = now,
                 Description = creationData.Description,
-                Developer = currentDeveloper.Name
+                CreatedBy = currentDeveloper.Name,
             };
+            
+            // Set the start time for the creator
+            newTask.SetDeveloperStartTime(currentDeveloper.Name, now);
+            // Safely initialize work time for the creator using EnsureDeveloperEntry
+            newTask.EnsureDeveloperEntry(currentDeveloper.Name);
+            // Add current developer to active developers list
+            newTask.ActiveDevelopers.Add(currentDeveloper.Name);
+            
             _developerConfigController.AssignTaskToCurrentDeveloper(newTask.Name);
             _taskTimeTrackerDataProvider.AddTask(newTask);
-            Console.WriteLine($"Task {newTask.Name} started at {newTask.Started}.");
+            Console.WriteLine($"Task '{newTask.Name}' started at {now}.");
         }
 
 
@@ -47,7 +89,8 @@ namespace DotTimeWork.TimeTracker
             Guard.AgainstNullOrEmpty(taskId, nameof(taskId));
 
             UpdateTimeTrackingFolder();
-
+            
+            var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
             TaskData? taskToFinish= _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
 
             if (taskToFinish==null)
@@ -56,14 +99,24 @@ namespace DotTimeWork.TimeTracker
                 return TimeSpan.Zero;
             }
             
+            // Check if this developer is participating in the task
+            if (!taskToFinish.IsDeveloperParticipating(currentDeveloper.Name))
+            {
+                Console.WriteLine($"You are not working on task '{taskId}'.");
+                return TimeSpan.Zero;
+            }
+            
+            // Get this developer's start time
+            DateTime developerStartTime = taskToFinish.GetDeveloperStartTime(currentDeveloper.Name);
+            
             _taskTimeTrackerDataProvider.SetTaskAsFinished(taskToFinish);
 
-
-            TimeSpan duration = taskToFinish.Finished - taskToFinish.Started;
+            // Calculate duration based on this developer's start time
+            TimeSpan duration = taskToFinish.Finished - developerStartTime;
             return duration;
         }
 
-        public TaskData GetTaskById(string taskId)
+        public TaskData? GetTaskById(string taskId)
         {
             UpdateTimeTrackingFolder();
             TaskData? foundRunning = _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
@@ -80,23 +133,47 @@ namespace DotTimeWork.TimeTracker
             return null;
         }
 
-        public void AddFocusTimeWork(string taskId,int finishedMinutes)
+        public TaskData? GetGlobalRunningTaskById(string taskId)
         {
             UpdateTimeTrackingFolder();
-            _taskTimeTrackerDataProvider.AddFocusTimeForTask(taskId, finishedMinutes);
+            TaskData? foundRunning = _taskTimeTrackerDataProvider.GetGlobalRunningTaskById(taskId);
+            return foundRunning;
         }
-       
+
+
+        public void AddFocusTimeWork(string taskId, int finishedMinutes, string developer)
+        {
+            UpdateTimeTrackingFolder();
+            _taskTimeTrackerDataProvider.AddFocusTimeForTask(taskId, finishedMinutes, developer);
+        }
 
         public List<TaskData> GetAllRunningTasks()
         {
             UpdateTimeTrackingFolder();
-            return _taskTimeTrackerDataProvider.RunningTasks.Values.ToList();
+            return _taskTimeTrackerDataProvider.GetAllRunningTasksForAllDevelopers();
         }
 
         public List<TaskData> GetAllFinishedTasks()
         {
             UpdateTimeTrackingFolder();
-            return _taskTimeTrackerDataProvider.FinishedTasks.Values.ToList();
+            return _taskTimeTrackerDataProvider.GetAllFinishedTasksForAllDevelopers();
+        }
+
+        public void UpdateTask(TaskData selectedTask)
+        {
+            _taskTimeTrackerDataProvider.UpdateTask(selectedTask);
+        }
+
+        public bool IsTaskAssignedToCurrentDeveloper(string taskId)
+        {
+            Guard.AgainstNullOrEmpty(taskId, nameof(taskId));
+            
+            UpdateTimeTrackingFolder();
+            var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
+            TaskData? task = _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
+            
+            // Check if task exists and if the current developer is participating in it
+            return task != null && task.IsDeveloperParticipating(currentDeveloper.Name);
         }
 
         private void UpdateTimeTrackingFolder()
@@ -114,11 +191,6 @@ namespace DotTimeWork.TimeTracker
                 return;
             }
             _taskTimeTrackerDataProvider.SetStoragePath(timeTrackingFolder);
-        }
-
-        public void UpdateTask(TaskData selectedTask)
-        {
-            _taskTimeTrackerDataProvider.UpdateTask(selectedTask);
         }
     }
 }

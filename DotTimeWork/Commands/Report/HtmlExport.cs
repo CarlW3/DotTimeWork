@@ -134,13 +134,20 @@ namespace DotTimeWork.Commands.Report
                 return;
             }
             writer.WriteLine("<table>");
-            writer.WriteLine("<tr><th>Aufgabe</th><th>Arbeitszeit</th><th>Fokuszeit</th><th>Entwickler</th>" +
+            writer.WriteLine("<tr><th>Aufgabe</th><th>Arbeitszeit</th><th>Fokuszeit(en) pro Entwickler</th><th>Aktive Entwickler</th>" +
                 (includeComments ? "<th>Kommentare</th>" : "") + "</tr>");
             DateTime now = DateTime.Now;
             foreach (var task in activeTasks)
             {
                 string commentColumn = includeComments ? $"<td>{GetComments(task)}</td>" : "";
-                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable((int)(now - task.Started).TotalMinutes)}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(task.FocusWorkTime)}</td><td>{task.Developer}</td>{commentColumn}</tr>");
+                string devTimes = string.Join("<br>", task.DeveloperWorkTimes.Select(kvp => $"{kvp.Key}: {TimeHelper.GetWorkingTimeHumanReadable(kvp.Value)}"));
+                
+                // Format active developers list, or show message if empty
+                string activeDevelopers = task.ActiveDevelopers != null && task.ActiveDevelopers.Any() 
+                    ? string.Join("<br>", task.ActiveDevelopers)
+                    : "<em>Keine aktiven Entwickler</em>";
+                    
+                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable((int)(now - task.Started).TotalMinutes)}</td><td>{devTimes}</td><td>{activeDevelopers}</td>{commentColumn}</tr>");
             }
             writer.WriteLine("</table>");
         }
@@ -157,12 +164,19 @@ namespace DotTimeWork.Commands.Report
                 return;
             }
             writer.WriteLine("<table>");
-            writer.WriteLine("<tr><th>Aufgabe</th><th>Fokuszeit</th><th>Entwickler</th>" +
+            writer.WriteLine("<tr><th>Aufgabe</th><th>Fokuszeit(en) pro Entwickler</th><th>Abgeschlossen von</th><th>Abgeschlossen am</th>" +
                 (includeComments ? "<th>Kommentare</th>" : "") + "</tr>");
             foreach (var task in finishedTasks)
             {
                 string commentColumn = includeComments ? $"<td>{GetComments(task)}</td>" : "";
-                writer.WriteLine($"<tr><td>{task.Name}</td><td>{TimeHelper.GetWorkingTimeHumanReadable(task.FocusWorkTime)}</td><td>{task.Developer}</td>{commentColumn}</tr>");
+                string devTimes = string.Join("<br>", task.DeveloperWorkTimes.Select(kvp => $"{kvp.Key}: {TimeHelper.GetWorkingTimeHumanReadable(kvp.Value)}"));
+                
+                // Show who finished the task, or Unknown if not available
+                string finishedBy = !string.IsNullOrEmpty(task.FinishedBy) 
+                    ? task.FinishedBy 
+                    : "<em>Unbekannt</em>";
+                    
+                writer.WriteLine($"<tr><td>{task.Name}</td><td>{devTimes}</td><td>{finishedBy}</td><td>{task.Finished:yyyy-MM-dd HH:mm}</td>{commentColumn}</tr>");
             }
             writer.WriteLine("</table>");
         }
