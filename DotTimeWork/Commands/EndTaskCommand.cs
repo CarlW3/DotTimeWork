@@ -23,7 +23,7 @@ namespace DotTimeWork.Commands
             AddCommand(allTasksCommand);
         }
 
-        private void Execute(string? taskId, bool verboseLogging)
+        public void Execute(string? taskId, bool verboseLogging)
         {
             ExecuteWithErrorHandling(() =>
             {
@@ -39,7 +39,7 @@ namespace DotTimeWork.Commands
             }, verboseLogging);
         }
 
-        private void ExecuteAllTasks(bool verboseLogging)
+        public void ExecuteAllTasks(bool verboseLogging)
         {
             ExecuteWithErrorHandling(() =>
             {

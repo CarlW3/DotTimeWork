@@ -73,7 +73,7 @@ namespace DotTimeWork.Commands
             Console.PrintInfo("  dottimework report html --output myreport.html");
         }
 
-        private void ExecuteCsvReport(string? outputFile, bool openAfterCreate, bool verboseLogging)
+        public void ExecuteCsvReport(string? outputFile, bool openAfterCreate, bool verboseLogging)
         {
             ExecuteWithErrorHandling(() =>
             {
@@ -88,7 +88,7 @@ namespace DotTimeWork.Commands
             }, verboseLogging);
         }
 
-        private void ExecuteHtmlReport(string? outputFile, bool includeFinishedTasks, bool includeComments, bool openAfterCreate, bool verboseLogging)
+        public void ExecuteHtmlReport(string? outputFile, bool includeFinishedTasks, bool includeComments, bool openAfterCreate, bool verboseLogging)
         {
             ExecuteWithErrorHandling(() =>
             {

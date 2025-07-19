@@ -28,7 +28,7 @@ namespace DotTimeWork.Commands
             Description = "Add a comment to a task. Comments help track task progress and store important notes.";
         }
 
-        private void Execute(string? taskId, string? commentText, bool verboseLogging)
+        public void Execute(string? taskId, string? commentText, bool verboseLogging)
         {
             ExecuteWithErrorHandling(() =>
             {

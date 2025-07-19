@@ -23,7 +23,7 @@ namespace DotTimeWork.Commands
             this.SetHandler(Execute, PublicOptions.TaskIdOption, PublicOptions.VerboseLogging);
         }
 
-        private void Execute(string? taskId, bool verboseLogging)
+        public void Execute(string? taskId, bool verboseLogging)
         {
             ExecuteWithErrorHandling(() =>
             {

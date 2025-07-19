@@ -17,7 +17,7 @@ namespace DotTimeWork.Commands
             this.SetHandler(Execute, PublicOptions.VerboseLogging);
         }
 
-        private void Execute(bool verboseLogging)
+        public void Execute(bool verboseLogging)
         {
             ExecuteWithErrorHandling(() =>
             {

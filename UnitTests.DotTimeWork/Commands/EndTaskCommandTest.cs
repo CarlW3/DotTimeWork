@@ -17,12 +17,10 @@ namespace UnitTests.DotTimeWork.Commands
             var endTaskCommand = new EndTaskCommand(taskController.Object);
 
             // Act
-            // Note: Since Execute is now private and called via System.CommandLine,
-            // we test the constructor and command setup instead
+            endTaskCommand.Execute("Task1", false);
 
             // Assert
-            Assert.NotNull(endTaskCommand);
-            Assert.Equal("End", endTaskCommand.Name);
+            taskController.Verify(x => x.EndTask("Task1"), Times.Once);
         }
 
     }

@@ -24,7 +24,7 @@ namespace DotTimeWork.Commands
             AddCommand(showCommand);
         }
 
-        private void Execute(bool verboseLogging)
+        public void Execute(bool verboseLogging)
         {
             ExecuteWithErrorHandling(() =>
             {

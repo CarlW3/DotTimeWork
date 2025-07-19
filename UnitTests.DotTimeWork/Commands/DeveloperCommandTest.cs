@@ -19,12 +19,10 @@ namespace UnitTests.DotTimeWork.Commands
             var developerCommand = new DeveloperCommand(mockDeveloperConfigController.Object);
 
             // Act
-            // Note: Since Execute is now private and called via System.CommandLine,
-            // we test the constructor and command setup instead
+            developerCommand.Execute(false);
             
             // Assert
-            Assert.NotNull(developerCommand);
-            Assert.Equal("Developer", developerCommand.Name);
+            mockDeveloperConfigController.Verify(x => x.CreateDeveloperConfigFile(), Times.Once);
         }
 
         [Fact]
@@ -37,12 +35,10 @@ namespace UnitTests.DotTimeWork.Commands
             var developerCommand = new DeveloperCommand(mockDeveloperConfigController.Object);
 
             // Act
-            // Note: Since Execute is now private and called via System.CommandLine,
-            // we test the constructor and command setup instead
+            developerCommand.Execute(true);
 
             // Assert
-            Assert.NotNull(developerCommand);
-            Assert.Equal("Developer", developerCommand.Name);
+            mockDeveloperConfigController.Verify(x => x.CreateDeveloperConfigFile(), Times.Once);
         }
     }
 }
