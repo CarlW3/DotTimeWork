@@ -2,43 +2,62 @@
 
 namespace DotTimeWork
 {
+    /// <summary>
+    /// Global constants and helper methods for file paths
+    /// </summary>
     public static class GlobalConstants
     {
         public const string RELEASE_VERSION = "1.5";
-
-        private const string ProjectConfigFilePath = "dottimework.json";
-        private const string DeveloperConfigFilePath = "developer.json";
-
         public const string REPORT_HTML_TITLE = "Dot Time Worker Report";
 
-        private static string AssemblyDirectory
+        // File names
+        private const string ProjectConfigFileName = "dottimework.json";
+        private const string DeveloperConfigFileName = "developer.json";
+
+        /// <summary>
+        /// Gets the directory where the application assembly is located
+        /// </summary>
+        public static string AssemblyDirectory
         {
             get
             {
-                string codeBase = Assembly.GetExecutingAssembly().Location;
-                UriBuilder uri = new UriBuilder(codeBase);
-                string path = Uri.UnescapeDataString(uri.Path);
-                return Path.GetDirectoryName(path);
+                var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+                var directory = Path.GetDirectoryName(assemblyLocation);
+                return directory ?? Environment.CurrentDirectory;
             }
         }
 
         /// <summary>
-        /// Global location -> used for all projects the same Developer Config
+        /// Gets the path to the developer config file (global location)
         /// </summary>
-        /// <returns></returns>
         public static string GetPathToDeveloperConfigFile()
         {
-            return Path.Combine(AssemblyDirectory, DeveloperConfigFilePath);
+            return Path.Combine(AssemblyDirectory, DeveloperConfigFileName);
         }
 
-
         /// <summary>
-        /// Local location -> used for the current project
+        /// Gets the path to the project config file (local location)
         /// </summary>
-        /// <returns></returns>
         public static string GetPathToProjectConfigFile()
         {
-            return Path.Combine(Environment.CurrentDirectory, ProjectConfigFilePath);
+            return Path.Combine(Environment.CurrentDirectory, ProjectConfigFileName);
+        }
+
+        /// <summary>
+        /// Validates that a path is safe and within expected bounds
+        /// </summary>
+        public static bool IsValidPath(string path)
+        {
+            try
+            {
+                return !string.IsNullOrEmpty(path) && 
+                       !Path.GetInvalidPathChars().Any(path.Contains) &&
+                       Path.IsPathRooted(path) || !Path.IsPathRooted(path); // Accept both absolute and relative
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

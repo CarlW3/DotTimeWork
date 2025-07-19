@@ -1,58 +1,78 @@
-﻿using DotTimeWork.TimeTracker;
+﻿using DotTimeWork.Commands.Base;
+using DotTimeWork.TimeTracker;
 using Spectre.Console;
 using System.CommandLine;
 
 namespace DotTimeWork.Commands
 {
-    internal class StartTaskCommand : Command
+    internal class StartTaskCommand : BaseCommand
     {
         private readonly ITaskTimeTracker _taskTimeTracker;
+
         public StartTaskCommand(ITaskTimeTracker taskTimeTracker) : base("Start", Properties.Resources.StartTask_Description)
         {
+            _taskTimeTracker = taskTimeTracker ?? throw new ArgumentNullException(nameof(taskTimeTracker));
             AddAlias("New");
-            _taskTimeTracker = taskTimeTracker;
-            AddOption(PublicOptions.TaskIdOption);
-            this.SetHandler(Execute, PublicOptions.TaskIdOption, PublicOptions.VerboseLogging);
-            Description = Properties.Resources.StartTask_Description;
         }
 
-        private void Execute(string taskId, bool verboseLogging)
+        protected override void SetupCommand()
         {
-            PublicOptions.IsVerbosLogging = verboseLogging;
-            string description = string.Empty;
-            TaskType taskType = TaskType.Other;
-            if (string.IsNullOrWhiteSpace(taskId))
-            {
-                // No need to check if task exists - we want to allow multiple developers to start the same task
-                taskId = AnsiConsole.Ask<string>(Properties.Resources.StartTask_CreateTask);
-                description = AnsiConsole.Ask<string>(Properties.Resources.StartTask_CreateTask_SmallDescription);
+            AddOption(PublicOptions.TaskIdOption);
+            this.SetHandler(Execute, PublicOptions.TaskIdOption, PublicOptions.VerboseLogging);
+        }
 
-                // Prompt for TaskType (optional)
-                var typeChoices = Enum.GetNames(typeof(TaskType));
-                var selectedType = AnsiConsole.Prompt(
-                    new SelectionPrompt<string>()
-                        .Title("Select task type:")
-                        .AddChoices(typeChoices));
-                if (Enum.TryParse<TaskType>(selectedType, out var parsedType))
+        private void Execute(string? taskId, bool verboseLogging)
+        {
+            ExecuteWithErrorHandling(() =>
+            {
+                var taskCreationData = GetTaskCreationData(taskId);
+                
+                if (verboseLogging)
                 {
-                    taskType = parsedType;
+                    Console.PrintInfo("Task creation started...");
                 }
-            }
-            else
+
+                _taskTimeTracker.StartTask(taskCreationData);
+                Console.PrintSuccess($"Task '{taskCreationData.Name}' started successfully!");
+            }, verboseLogging);
+        }
+
+        private TaskCreationData GetTaskCreationData(string? taskId)
+        {
+            if (!string.IsNullOrWhiteSpace(taskId))
             {
-                description = "-defined by system-";
-                Console.WriteLine($"Starting task '{taskId}'.");
+                return new TaskCreationData
+                {
+                    Name = taskId,
+                    Description = "-defined by system-",
+                    TaskType = TaskType.Other
+                };
             }
-            if (verboseLogging)
+
+            // Interactive mode - prompt for task details
+            var name = Console.AskForInput<string>(Properties.Resources.StartTask_CreateTask);
+            var description = Console.AskForInput<string>(Properties.Resources.StartTask_CreateTask_SmallDescription);
+            var taskType = PromptForTaskType();
+
+            return new TaskCreationData
             {
-                AnsiConsole.MarkupLine($"[grey]Task creation started....[/]");
-            }
-            _taskTimeTracker.StartTask(new TaskCreationData
-            {
-                Name = taskId,
+                Name = name,
                 Description = description,
                 TaskType = taskType
-            });
+            };
+        }
+
+        private TaskType PromptForTaskType()
+        {
+            var typeChoices = Enum.GetNames(typeof(TaskType));
+            var selectedType = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("Select task type:")
+                    .AddChoices(typeChoices));
+
+            return Enum.TryParse<TaskType>(selectedType, out var parsedType) 
+                ? parsedType 
+                : TaskType.Other;
         }
     }
 }

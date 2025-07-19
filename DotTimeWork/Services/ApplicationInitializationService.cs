@@ -1,3 +1,5 @@
+using DotTimeWork.Commands;
+using DotTimeWork.ConsoleService;
 using DotTimeWork.DataProvider;
 using DotTimeWork.Project;
 
@@ -7,33 +9,46 @@ namespace DotTimeWork.Services
     {
         private readonly IProjectConfigController _projectConfigController;
         private readonly ITaskTimeTrackerDataProvider _taskTimeTrackerDataProvider;
+        private readonly IInputAndOutputService _consoleService;
 
-        public ApplicationInitializationService(IProjectConfigController projectConfigController, ITaskTimeTrackerDataProvider taskTimeTrackerDataProvider)
+        public ApplicationInitializationService(
+            IProjectConfigController projectConfigController, 
+            ITaskTimeTrackerDataProvider taskTimeTrackerDataProvider,
+            IInputAndOutputService consoleService)
         {
-            _projectConfigController = projectConfigController;
-            _taskTimeTrackerDataProvider = taskTimeTrackerDataProvider;
+            _projectConfigController = projectConfigController ?? throw new ArgumentNullException(nameof(projectConfigController));
+            _taskTimeTrackerDataProvider = taskTimeTrackerDataProvider ?? throw new ArgumentNullException(nameof(taskTimeTrackerDataProvider));
+            _consoleService = consoleService ?? throw new ArgumentNullException(nameof(consoleService));
         }
 
         public void Initialize()
         {
-            InitializeTimeTrackingFolder();
+            try
+            {
+                InitializeTimeTrackingFolder();
+            }
+            catch (Exception ex)
+            {
+                _consoleService.PrintError($"Failed to initialize application: {ex.Message}");
+                throw;
+            }
         }
 
         private void InitializeTimeTrackingFolder()
         {
-            ProjectConfig foundProject = _projectConfigController.GetCurrentProjectConfig();
-            if (foundProject == null)
+            var projectConfig = _projectConfigController.GetCurrentProjectConfig();
+            if (projectConfig?.TimeTrackingFolder == null)
             {
-                Console.WriteLine("No project found.");
+                _consoleService.PrintWarning("No project or time tracking folder configured. Some features may not work properly.");
                 return;
             }
-            string timeTrackingFolder = foundProject.TimeTrackingFolder;
-            if (string.IsNullOrEmpty(timeTrackingFolder))
+
+            _taskTimeTrackerDataProvider.SetStoragePath(projectConfig.TimeTrackingFolder);
+            
+            if (PublicOptions.IsVerbosLogging)
             {
-                Console.WriteLine("No time tracking folder found.");
-                return;
+                _consoleService.PrintSuccess($"Time tracking folder initialized: {projectConfig.TimeTrackingFolder}");
             }
-            _taskTimeTrackerDataProvider.SetStoragePath(timeTrackingFolder);
         }
     }
 }
