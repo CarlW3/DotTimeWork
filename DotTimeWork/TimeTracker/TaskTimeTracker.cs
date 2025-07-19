@@ -20,7 +20,6 @@ namespace DotTimeWork.TimeTracker
 
         public void StartTask(TaskCreationData creationData)
         {
-            UpdateTimeTrackingFolder();
             var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
             TaskData? foundTask = _taskTimeTrackerDataProvider.GetRunningTaskById(creationData.Name);
             
@@ -88,8 +87,6 @@ namespace DotTimeWork.TimeTracker
         {
             Guard.AgainstNullOrEmpty(taskId, nameof(taskId));
 
-            UpdateTimeTrackingFolder();
-            
             var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
             TaskData? taskToFinish= _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
 
@@ -118,7 +115,6 @@ namespace DotTimeWork.TimeTracker
 
         public TaskData? GetTaskById(string taskId)
         {
-            UpdateTimeTrackingFolder();
             TaskData? foundRunning = _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
             if(foundRunning != null)
             {
@@ -135,7 +131,6 @@ namespace DotTimeWork.TimeTracker
 
         public TaskData? GetGlobalRunningTaskById(string taskId)
         {
-            UpdateTimeTrackingFolder();
             TaskData? foundRunning = _taskTimeTrackerDataProvider.GetGlobalRunningTaskById(taskId);
             return foundRunning;
         }
@@ -143,19 +138,16 @@ namespace DotTimeWork.TimeTracker
 
         public void AddFocusTimeWork(string taskId, int finishedMinutes, string developer)
         {
-            UpdateTimeTrackingFolder();
             _taskTimeTrackerDataProvider.AddFocusTimeForTask(taskId, finishedMinutes, developer);
         }
 
         public List<TaskData> GetAllRunningTasks()
         {
-            UpdateTimeTrackingFolder();
             return _taskTimeTrackerDataProvider.GetAllRunningTasksForAllDevelopers();
         }
 
         public List<TaskData> GetAllFinishedTasks()
         {
-            UpdateTimeTrackingFolder();
             return _taskTimeTrackerDataProvider.GetAllFinishedTasksForAllDevelopers();
         }
 
@@ -168,29 +160,11 @@ namespace DotTimeWork.TimeTracker
         {
             Guard.AgainstNullOrEmpty(taskId, nameof(taskId));
             
-            UpdateTimeTrackingFolder();
             var currentDeveloper = _developerConfigController.CurrentDeveloperConfig;
             TaskData? task = _taskTimeTrackerDataProvider.GetRunningTaskById(taskId);
             
             // Check if task exists and if the current developer is participating in it
             return task != null && task.IsDeveloperParticipating(currentDeveloper.Name);
-        }
-
-        private void UpdateTimeTrackingFolder()
-        {
-            ProjectConfig foundProject= _projectConfigController.GetCurrentProjectConfig();
-            if(foundProject == null)
-            {
-                Console.WriteLine("No project found.");
-                return;
-            }
-            string timeTrackingFolder = foundProject.TimeTrackingFolder;
-            if (string.IsNullOrEmpty(timeTrackingFolder))
-            {
-                Console.WriteLine("No time tracking folder found.");
-                return;
-            }
-            _taskTimeTrackerDataProvider.SetStoragePath(timeTrackingFolder);
         }
     }
 }
