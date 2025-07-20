@@ -18,8 +18,7 @@ namespace UnitTests.DotTimeWork.Commands
         {
             // Arrange
             var projectConfigController = new Mock<IProjectConfigController>();
-            Mock<IInputAndOutputService> inputAndOutputService = new Mock<IInputAndOutputService>();
-            var createProjectCommand = new CreateProjectCommand(projectConfigController.Object, inputAndOutputService.Object);
+            var createProjectCommand = new CreateProjectCommand(projectConfigController.Object);
 
             // Act
             createProjectCommand.Execute(false);

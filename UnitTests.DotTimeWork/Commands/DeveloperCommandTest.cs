@@ -15,13 +15,12 @@ namespace UnitTests.DotTimeWork.Commands
             
             mockDeveloperConfigController.Setup(x => x.IsDeveloperConfigFileExisting()).Returns(false);
 
-            Mock<IInputAndOutputService> mockInputAndOutputService = new Mock<IInputAndOutputService>();
             // Arrange
-            var developerCommand = new DeveloperCommand(mockDeveloperConfigController.Object,mockInputAndOutputService.Object);
+            var developerCommand = new DeveloperCommand(mockDeveloperConfigController.Object);
 
             // Act
             developerCommand.Execute(false);
-
+            
             // Assert
             mockDeveloperConfigController.Verify(x => x.CreateDeveloperConfigFile(), Times.Once);
         }
@@ -32,17 +31,14 @@ namespace UnitTests.DotTimeWork.Commands
             Mock<IDeveloperConfigController> mockDeveloperConfigController = new Mock<IDeveloperConfigController>();
             mockDeveloperConfigController.Setup(x => x.IsDeveloperConfigFileExisting()).Returns(true);
 
-            Mock<IInputAndOutputService> mockInputAndOutputService = new Mock<IInputAndOutputService>();
             // Arrange
-            var developerCommand = new DeveloperCommand(mockDeveloperConfigController.Object, mockInputAndOutputService.Object);
+            var developerCommand = new DeveloperCommand(mockDeveloperConfigController.Object);
 
             // Act
             developerCommand.Execute(true);
 
             // Assert
             mockDeveloperConfigController.Verify(x => x.CreateDeveloperConfigFile(), Times.Once);
-            mockInputAndOutputService.Verify(x => x.PrintWarning(It.IsAny<string>()), Times.Once);
-            mockInputAndOutputService.Verify(x => x.PrintSuccess(Resources.Developer_Create_Success), Times.Once);
         }
     }
 }

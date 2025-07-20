@@ -23,6 +23,10 @@ namespace DotTimeWork
             ConfigureServices(serviceCollection);
             CountOfDependencies = serviceCollection.Count;
             _serviceProvider = serviceCollection.BuildServiceProvider();
+            
+            // Initialize the application (including time tracking folder setup)
+            var initializationService = GetService<IApplicationInitializationService>();
+            initializationService.Initialize();
         }
 
         private static void ConfigureServices(IServiceCollection services)
@@ -32,6 +36,7 @@ namespace DotTimeWork
             services.AddSingleton<ITaskTimeTrackerDataProvider,TaskTimeTrackerDataJson>();
             services.AddSingleton<IProjectConfigController, ProjectConfigController>();
             services.AddSingleton<IDeveloperConfigController, DeveloperConfigController>();
+            services.AddSingleton<IApplicationInitializationService, ApplicationInitializationService>();
             services.AddTransient<ITaskTimeTracker, TaskTimeTracker>();
             services.AddTransient<ITotalWorkingTimeCalculator, TotalWorkingTimeCalculator>();
             RegisterCommands(services);

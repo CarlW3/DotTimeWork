@@ -13,17 +13,14 @@ namespace UnitTests.DotTimeWork.Commands
         {
             // Arrange
             var taskController = new Mock<ITaskTimeTracker>();
-            var inputAndOutputService = new Mock<IInputAndOutputService>();
             
-            inputAndOutputService.Setup(x => x.AskForInput<string>(It.IsAny<string>())).Returns("ABCDEF");
-            var endTaskCommand = new EndTaskCommand(taskController.Object, inputAndOutputService.Object);
+            var endTaskCommand = new EndTaskCommand(taskController.Object);
 
             // Act
-            endTaskCommand.Execute("Task1",false);
+            endTaskCommand.Execute("Task1", false);
 
             // Assert
             taskController.Verify(x => x.EndTask("Task1"), Times.Once);
-            inputAndOutputService.Verify(x => x.AskForInput<string>(It.IsAny<string>()), Times.Never);
         }
 
     }
